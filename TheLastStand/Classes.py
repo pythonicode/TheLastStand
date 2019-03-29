@@ -5,6 +5,7 @@ Created on Mar 13, 2019
 '''
 
 import pygame as p
+import time
 
 class TextButton:
     
@@ -61,15 +62,15 @@ class TextButton:
 
 class ImageButton:
     
-    def __init__(self, x, y, image): 
+    def __init__(self, x, y, upImage, downImage): 
         self.x = x 
         self.y = y
         self.xInit = x
         self.yInit = y
-        self.image = image
-        self.widthInit = image.get_width()
-        self.heightInit = image.get_height()
-        self.on = False
+        self.upImage= upImage
+        self.downImage = downImage
+        self.image = upImage
+        self.up = True
         
     # Draw the Button
     def draw(self, screen):
@@ -85,30 +86,22 @@ class ImageButton:
     
     # Toggle the button
     def toggle(self):
-        if self.on == False:
-            self.image = p.transform.smoothscale(self.image, (int(self.widthInit*1.05), int(self.heightInit*1.05)))
-            self.x = self.xInit-int(self.widthInit*.025)
-            self.y = self.yInit-int(self.heightInit*.025)
-            self.on = True
-        elif self.on == True:
-            self.image = p.transform.smoothscale(self.image, (self.widthInit, self.heightInit))
-            self.x = self.xInit
-            self.y = self.yInit
-            self.on = False
+        if self.up == False:
+            self.image = self.upImage
+            self.up = True
+        elif self.up == True:
+            self.image = self.downImage
+            self.up = False
     
     # Toggle the button on (if off)    
     def toggleOn(self):
-        self.image = p.transform.smoothscale(self.image, (int(self.widthInit*1.05), int(self.heightInit*1.05)))
-        self.x = self.xInit-int(self.widthInit*.025)
-        self.y = self.yInit-int(self.heightInit*.025)
-        self.on = True
+        self.image = self.downImage
+        self.up = False
       
     # Toggle the button off (if on)   
     def toggleOff(self):
-        self.image = p.transform.smoothscale(self.image, (self.widthInit, self.heightInit))
-        self.x = self.xInit
-        self.y = self.yInit
-        self.on = False   
+        self.image = self.upImage
+        self.up = True   
         
 class GameData:
     
@@ -135,52 +128,85 @@ class GameData:
             f.writelines(stringArray)
             f.close()
 
-'''
-FUNCTIONS
-'''
 
-def setHovering(button):
-    if button.check(p.mouse.get_pos()):
-        button.toggleOn()
-    else:
-        button.toggleOff()
+class Hero:
+    
+    def __init__(self, name, tier, level, x, y, idleImage, attackImage, location):
         
-def drawText(screen, text, size, x, y, color):
-    myfont = p.font.Font('Fonts/PixelSplitter-Bold.ttf', size)
-    textsurface = myfont.render(text, False, color)
-    screen.blit(textsurface,(x,y))
-
-def res(num, resolution_mult):
-    return int(num*resolution_mult)
-
-def getImage(path, width, height):
-    return p.transform.scale(p.image.load(path), (width,height))
-
-def toNum(myBoolean):
-    if myBoolean:
-        return 1
-    else:
+        self.name = name
+        self.tier = tier
+        self.level = level
+        self.x = x
+        self.y = y
+        self.xInit = x
+        self.yInit = y
+        self.animationImage1 = idleImage
+        self.animationImage2 = attackImage
+        self.image = idleImage
+        self.loc = location
+        
+        self.upgradeCost = int(200*(tier-1))
+        
+    def draw(self, screen):
+        screen.blit(self.image, (self.x, self.y))
+    
+    def update(self, mSecs):
+        if int(time.clock()*1000)%(mSecs*2) <= mSecs:
+            self.image = self.animationImage1
+            self.x = self.xInit
+            self.y = self.yInit
+        else:
+            self.image = self.animationImage2
+            if self.loc == 'right' or self.loc == 'r':
+                self.x = self.xInit - self.animationImage2.get_width() + self.animationImage1.get_width()
+            self.y = self.yInit
+            
+class Titan:
+    
+    def __init__(self, level, tier, x, y, image1, image2):
+        
+        self.level = level
+        self.tier = tier
+        self.x = x
+        self.y = y
+        self.xInit = x
+        self.yInit = y
+        
+        self.animationImage1 = image1
+        self.animationImage2 = image2
+        self.image = self.animationImage1
+        
+    def draw(self, screen):
+        screen.blit(self.image, (self.x, self.y))
+    
+    def update(self, mSecs):
+        if int(time.clock()*1000)%(mSecs*2) <= mSecs:
+            self.image = self.animationImage1
+            self.y = self.yInit
+        else:
+            self.image = self.animationImage2
+            self.y = self.yInit + (self.animationImage1.get_height()-self.animationImage2.get_height())*2
+        if int(time.clock()*1000)%(mSecs) >= mSecs//2 and int(time.clock()*1000)%(mSecs) <= mSecs//2 + 100:
+            return time.clock()
         return 0
-
-def toBoolean(myNum):
-    if myNum == 1:
-        return True
-    else:
+    
+    def wobble(self, currentTime):
+        if time.clock()-currentTime <= 0.025:
+            self.x = self.xInit - 5
+            return False
+        elif time.clock()-currentTime <= 0.05:
+            self.x = self.xInit + 5
+            return False
+        else:
+            self.x = self.xInit
+            return True
+    
+    def check(self, pos):
+        mouseX = pos[0]
+        mouseY = pos[1]
+        if mouseX > self.x and mouseX < (self.x+self.image.get_width()) and mouseY > self.y and mouseY < (self.y+self.image.get_height()):
+            return True
         return False
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

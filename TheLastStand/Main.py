@@ -10,23 +10,26 @@ from Classes import *
 import pygame as p
 import random
 import math
-from pygame.threads.Py25Queue import Full
-from pygame.constants import K_ESCAPE
+import time
+
 
 # Set up the Window
 def setup():  
     global gameState, clock, screen, game
-    global FULLSCREEN, RESOLUTION_SETTING, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP  
+    global FULLSCREEN, RESOLUTION_SETTING, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP, MONEY, STAGE, HERO_INDEX
     p.init()
     # RETRIEVING DATA FROM SAVE FILE
     game = GameData('Saves/Save.txt')
     data = game.data
     FULLSCREEN = toBoolean(data[0])
     RESOLUTION_SETTING = data[1]/900
-    WINDOW_WIDTH = res(1600,RESOLUTION_SETTING)
-    WINDOW_HEIGHT = res(900,RESOLUTION_SETTING)
+    WINDOW_WIDTH = res(1600)
+    WINDOW_HEIGHT = res(900)
     FPS_SETTING = data[2]
     HELP = toBoolean(data[3])
+    MONEY = data[4]
+    STAGE = data[5]
+    HERO_INDEX = data[6]
     clock = p.time.Clock()
     # Display mode (sets width and height for the window)
     if FULLSCREEN:
@@ -43,41 +46,61 @@ def setup():
 # Main function that runs the game
 def main():
     global gameState, clock, screen, game
-    global FULLSCREEN, RESOLUTION_SETTING, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP, PREV_STATE
+    global FULLSCREEN, RESOLUTION_SETTING, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP, PREV_STATE, MONEY, STAGE, HERO_INDEX
     # Misc Objects
     click = p.mixer.Sound('Sounds/click.wav')
+    helpColor = (255,128,128)
+    attackTime = time.clock()
     # Main Menu Objects
-    startButton = TextButton(res(1120,RESOLUTION_SETTING), res(450,RESOLUTION_SETTING), 'Play', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
-    settingsButton = TextButton(res(1070+(res(40, RESOLUTION_SETTING)-40),RESOLUTION_SETTING), res(550,RESOLUTION_SETTING), 'Settings', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
-    quitButton = TextButton(res(1120,RESOLUTION_SETTING), res(650,RESOLUTION_SETTING), 'Exit', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
+    startButton = TextButton(res(1120), res(450), 'Play', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
+    settingsButton = TextButton(res(1070+(res(40)-40)), res(550), 'Settings', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
+    quitButton = TextButton(res(1120), res(650), 'Exit', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
     # Settings Objects
-    fullScreenOnButton = TextButton(res(700,RESOLUTION_SETTING), res(200,RESOLUTION_SETTING), 'On', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
-    fullScreenOffButton = TextButton(res(1200,RESOLUTION_SETTING), res(200,RESOLUTION_SETTING), 'Off', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
-    lowResolutionButton = TextButton(res(600,RESOLUTION_SETTING), res(300,RESOLUTION_SETTING), '1280x720', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
-    midResolutionButton = TextButton(res(900,RESOLUTION_SETTING), res(300,RESOLUTION_SETTING), '1600x900', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
-    highResolutionButton = TextButton(res(1200,RESOLUTION_SETTING), res(300,RESOLUTION_SETTING), '1920x1080', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
-    lowFPS = TextButton(res(675,RESOLUTION_SETTING), res(400,RESOLUTION_SETTING), '15', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
-    midFPS = TextButton(res(975,RESOLUTION_SETTING), res(400,RESOLUTION_SETTING), '30', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
-    highFPS = TextButton(res(1275,RESOLUTION_SETTING), res(400,RESOLUTION_SETTING), '60', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
-    helpOnButton = TextButton(res(700,RESOLUTION_SETTING), res(500,RESOLUTION_SETTING), 'On', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
-    helpOffButton = TextButton(res(1200,RESOLUTION_SETTING), res(500,RESOLUTION_SETTING), 'Off', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
-    backButton = TextButton(res(750, RESOLUTION_SETTING), res(750,RESOLUTION_SETTING), 'Back', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
-    # Game Menu Objects
-    upgradesButton = TextButton(res(700,RESOLUTION_SETTING), res(200,RESOLUTION_SETTING), 'Upgrades', 'PixelSplitter-Bold.ttf', res(50,RESOLUTION_SETTING), (0,0,0), (255,0,0))
-    artifactsButton = TextButton(res(700,RESOLUTION_SETTING), res(400,RESOLUTION_SETTING), 'Artifacts', 'PixelSplitter-Bold.ttf', res(50,RESOLUTION_SETTING), (0,0,0), (255,0,0))
-    skillsButton = TextButton(res(1100,RESOLUTION_SETTING), res(200,RESOLUTION_SETTING), 'Skills', 'PixelSplitter-Bold.ttf', res(50,RESOLUTION_SETTING), (0,0,0), (255,0,0))
+    fullScreenOnButton = TextButton(res(700), res(200), 'On', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
+    fullScreenOffButton = TextButton(res(1200), res(200), 'Off', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
+    lowResolutionButton = TextButton(res(600), res(300), '1280x720', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
+    midResolutionButton = TextButton(res(900), res(300), '1600x900', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
+    highResolutionButton = TextButton(res(1200), res(300), '1920x1080', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
+    lowFPS = TextButton(res(675), res(400), '15', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
+    midFPS = TextButton(res(975), res(400), '30', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
+    highFPS = TextButton(res(1275), res(400), '60', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
+    helpOnButton = TextButton(res(700), res(500), 'On', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
+    helpOffButton = TextButton(res(1200), res(500), 'Off', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
+    # Game Objects
+    heroesButton = TextButton(res(60), res(250), 'Heroes', 'PixelSplitter-Bold.ttf', res(50), (0,0,0), (255,0,0))
+    artifactsButton = TextButton(res(1280), res(250), 'Artifacts', 'PixelSplitter-Bold.ttf', res(50), (0,0,0), (255,0,0))
+    skillsButton = TextButton(res(25), res(650), 'Abilities', 'PixelSplitter-Bold.ttf', res(50), (0,0,0), (255,0,0))
+    prestigeButton = TextButton(res(1295), res(650), 'Prestige', 'PixelSplitter-Bold.ttf', res(50), (0,0,0), (255,0,0))
+    # Titans
+    titan1 = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+    titans = [titan1]
+    # Heroes
+    pewdiepieHero = Hero('PewDiePie', 1, 0, res(425), res(380), resImage(getImage('Images/pewdiepie.png')), resImage(getImage('Images/pewdiepie_attack.png')), 'left')
+    mrbeastHero = Hero('Mr. Beast', 2, 0, res(1130), res(280), resImage(getImage('Images/mrbeast.png')), resImage(getImage('Images/mrbeast_attack.png')), 'right')
+    marziaHero = Hero('Marzia', 3, 0, res(470), res(600), resImage(getImage('Images/marzia.png')), resImage(getImage('Images/marzia_attack.png')), 'left')
+    jackHero = Hero('Jack Septic Eye', 4, 0, res(1150), res(500), resImage(getImage('Images/jack.png')), resImage(getImage('Images/jack_attack.png')), 'right')
+    markiplierHero = Hero('Markiplier', 5, 0, res(400), res(500), resImage(getImage('Images/markiplier.png')), resImage(getImage('Images/markiplier_attack.png')), 'left')
+    heroes = [pewdiepieHero, mrbeastHero, marziaHero, jackHero, markiplierHero]
     # Pause Menu
-    mainMenuButton = TextButton(res(680,RESOLUTION_SETTING), res(300,RESOLUTION_SETTING), 'Main Menu', 'PixelSplitter-Bold.ttf', res(40,RESOLUTION_SETTING), (255,255,255), (255,0,0))
+    mainMenuButton = TextButton(res(680), res(300), 'Main Menu', 'PixelSplitter-Bold.ttf', res(40), (255,255,255), (255,0,0))
+    settingsButton2 = TextButton(res(694), res(400), 'Settings', 'PixelSplitter-Bold.ttf', res(40), (255,255,255), (255,0,0))
+    quitButton2 = TextButton(res(745), res(500), 'Exit', 'PixelSplitter-Bold.ttf', res(40), (255,255,255), (255,0,0))
+    # Back Button 
+    backButton = ImageButton(res(50), res(750), resImage(getImage('Images/back_arrow.png')), resImage(getImage('Images/back_arrow_hover.png')))
+    # Right Button
+    rightButton = ImageButton(res(1240), res(400), resImage(getImage('Images/right_arrow.png')), resImage(getImage('Images/right_arrow_hover.png')))
+    # Left Button
+    leftButton = ImageButton(res(300), res(400), resImage(getImage('Images/left_arrow.png')), resImage(getImage('Images/left_arrow_hover.png')))
     # MAIN MENU
     while gameState == 'mainmenu':
         # Pre-Event Code
         screen.fill((255,255,255))
-        drawText(screen, 'PewDiePie', res(128,RESOLUTION_SETTING), res(790,RESOLUTION_SETTING), res(100,RESOLUTION_SETTING), (0,0,0))
-        drawText(screen, 'The Last Stand', res(64,RESOLUTION_SETTING), res(900,RESOLUTION_SETTING), res(250,RESOLUTION_SETTING), (0,0,0))
+        drawText(screen, 'PewDiePie', res(128), res(790), res(100), (0,0,0))
+        drawText(screen, 'The Last Stand', res(64), res(900), res(250), (0,0,0))
         startButton.draw(screen)
         settingsButton.draw(screen)
         quitButton.draw(screen)
-        gameLogo = getImage('Images/pewdiepieicon.png', res(900, RESOLUTION_SETTING), res(900,RESOLUTION_SETTING))
+        gameLogo = getImage('Images/pewdiepieicon.png', res(900), res(900))
         screen.blit(gameLogo, (0,0))
         # Events
         for event in p.event.get():
@@ -91,7 +114,7 @@ def main():
             if event.type == p.MOUSEBUTTONUP:
                 if startButton.check(p.mouse.get_pos()):
                     click.play()
-                    gameState = 'gamemenu'
+                    gameState = 'game'
                     main()
                 if settingsButton.check(p.mouse.get_pos()):
                     click.play()
@@ -111,7 +134,7 @@ def main():
         # Pre-Event Code
         screen.fill((255,255,255))
         # Fullscreen Settings
-        drawText(screen, 'Fullscreen:', 40, res(200,RESOLUTION_SETTING), res(200,RESOLUTION_SETTING), (0,0,0))
+        drawText(screen, 'Fullscreen:', 40, res(200), res(200), (0,0,0))
         fullScreenOnButton.draw(screen)
         fullScreenOffButton.draw(screen)
         if FULLSCREEN == True:
@@ -121,7 +144,7 @@ def main():
             fullScreenOnButton.toggleOff()
             fullScreenOffButton.toggleOn()
         # Resolution Settings
-        drawText(screen, 'Resolution:', 40, res(200,RESOLUTION_SETTING), res(300,RESOLUTION_SETTING), (0,0,0))
+        drawText(screen, 'Resolution:', 40, res(200), res(300), (0,0,0))
         lowResolutionButton.draw(screen)
         midResolutionButton.draw(screen)
         highResolutionButton.draw(screen)
@@ -138,7 +161,7 @@ def main():
             midResolutionButton.toggleOff()
             highResolutionButton.toggleOn()
         # FPS Settings
-        drawText(screen, 'Max FPS:', 40, res(200,RESOLUTION_SETTING), res(400,RESOLUTION_SETTING), (0,0,0))
+        drawText(screen, 'Max FPS:', 40, res(200), res(400), (0,0,0))
         lowFPS.draw(screen)
         midFPS.draw(screen)
         highFPS.draw(screen)
@@ -155,7 +178,7 @@ def main():
             midFPS.toggleOff()
             highFPS.toggleOn()
         # Help Settings
-        drawText(screen, 'Help:', 40, res(200, RESOLUTION_SETTING), res(500, RESOLUTION_SETTING), (0,0,0))
+        drawText(screen, 'Help:', 40, res(200), res(500), (0,0,0))
         helpOnButton.draw(screen)
         helpOffButton.draw(screen)
         if HELP == True:
@@ -249,54 +272,123 @@ def main():
         # Update the display
         p.display.flip()
         clock.tick(FPS_SETTING)
-    while gameState == 'gamemenu':
+    while gameState == 'game':
         # Pre-Event Code
         screen.fill((255,255,255))
-        upgradesButton.draw(screen)
+        # Menu Buttons
+        heroesButton.draw(screen)
         artifactsButton.draw(screen)
         skillsButton.draw(screen)
+        prestigeButton.draw(screen)
+        # Game Screen
+        p.draw.rect(screen, (0,0,0), p.Rect(res(340), 0, res(920), res(920)))
+        p.draw.rect(screen, (255,255,255), p.Rect(res(350), 0, res(900), res(900)))
+        # Titans
+        titan1.draw(screen)
+        titan1.update(1000)
+        if titan1.update(1000) > 0:
+            attackTime = titan1.update(1000)
+        # Heroes
+        for hero in heroes:
+            hero.draw(screen)
+            hero.update(500)
         if HELP:
-            drawText(screen, 'This is the game menu.', res(20,RESOLUTION_SETTING), res(950,RESOLUTION_SETTING), res(100,RESOLUTION_SETTING), (255,128,128))
-            drawText(screen, 'You can navigate the various features of the game with these buttons.', res(20,RESOLUTION_SETTING), res(650,RESOLUTION_SETTING), res(125,RESOLUTION_SETTING), (255,128,128))
+            pass
         # Events
         for event in p.event.get():
             # Quit Event
             if event.type == p.QUIT:
                 gameState = 'quit'
             if event.type == p.MOUSEMOTION:
-                if upgradesButton.check(p.mouse.get_pos()):
-                    upgradesButton.toggleOn()
+                if heroesButton.check(p.mouse.get_pos()):
+                    heroesButton.toggleOn()
                 else:
-                    upgradesButton.toggleOff()
+                    heroesButton.toggleOff()
+                if artifactsButton.check(p.mouse.get_pos()):
+                    artifactsButton.toggleOn()
+                else:
+                    artifactsButton.toggleOff()
+                if skillsButton.check(p.mouse.get_pos()):
+                    skillsButton.toggleOn()
+                else:
+                    skillsButton.toggleOff()
+                if prestigeButton.check(p.mouse.get_pos()):
+                    prestigeButton.toggleOn()
+                else:
+                    prestigeButton.toggleOff()
             if event.type == p.MOUSEBUTTONUP:
-                pass
+                if heroesButton.check(p.mouse.get_pos()):
+                    click.play()
+                    gameState = 'heroes'
+                    main()
+                if artifactsButton.check(p.mouse.get_pos()):
+                    click.play()
+                    gameState = 'artifacts'
+                    main()
+                if skillsButton.check(p.mouse.get_pos()):
+                    click.play()
+                    gameState = 'skills'
+                    main()
+                if prestigeButton.check(p.mouse.get_pos()):
+                    click.play()
+                    gameState = 'prestige'
+                    main()
+                if titan1.check(p.mouse.get_pos()):
+                    attackTime = time.clock()
             if event.type == p.KEYUP:
-                if event.key == K_ESCAPE:
+                if event.key == p.K_ESCAPE:
                     gameState = 'pausemenu'
                     main()
+                if event.key == p.K_SPACE:
+                    attackTime = time.clock()
+        titan1.wobble(attackTime)
         # Post-Event Code
-        PREV_STATE = 'gamemenu'
+        PREV_STATE = 'game'
         # Update the display
         p.display.flip()
         clock.tick(FPS_SETTING)
     while gameState == 'pausemenu':
         # Pre-Event Code
-        p.draw.rect(screen, (0,0,0), p.Rect(res(600,RESOLUTION_SETTING), res(100,RESOLUTION_SETTING), res(400, RESOLUTION_SETTING), res(700, RESOLUTION_SETTING)))
+        p.draw.rect(screen, (0,0,0), p.Rect(res(600), res(100), res(400), res(700)))
+        p.draw.rect(screen, (255,255,255), p.Rect(res(700), res(250), res(200), res(5)))
+        drawText(screen, 'PAUSED', res(80), res(625), res(120), (255,255,255))
         mainMenuButton.draw(screen)
+        settingsButton2.draw(screen)
+        quitButton2.draw(screen)
         # Events
         for event in p.event.get():
             # Quit Event
             if event.type == p.QUIT:
                 gameState = 'quit'
             if event.type == p.MOUSEMOTION:
-                if upgradesButton.check(p.mouse.get_pos()):
-                    upgradesButton.toggleOn()
+                if mainMenuButton.check(p.mouse.get_pos()):
+                    mainMenuButton.toggleOn()
                 else:
-                    upgradesButton.toggleOff()
+                    mainMenuButton.toggleOff()
+                if settingsButton2.check(p.mouse.get_pos()):
+                    settingsButton2.toggleOn()
+                else:
+                    settingsButton2.toggleOff()
+                if quitButton2.check(p.mouse.get_pos()):
+                    quitButton2.toggleOn()
+                else:
+                    quitButton2.toggleOff()
             if event.type == p.MOUSEBUTTONUP:
-                pass
+                if mainMenuButton.check(p.mouse.get_pos()):
+                    click.play()
+                    gameState = 'mainmenu'
+                    main()
+                if settingsButton2.check(p.mouse.get_pos()):
+                    click.play()
+                    gameState = 'settings'
+                    main()
+                if quitButton2.check(p.mouse.get_pos()):
+                    click.play()
+                    gameState = 'quit'
+                    main()
             if event.type == p.KEYUP:
-                if event.key == K_ESCAPE:
+                if event.key == p.K_ESCAPE:
+                    click.play()
                     gameState = PREV_STATE
                     main()
         # Post-Event Code
@@ -304,10 +396,166 @@ def main():
         # Update the display
         p.display.flip()
         clock.tick(FPS_SETTING)
-    
+    while gameState == 'heroes':
+        # Pre-Event Code
+        screen.fill((255,255,255))
+        # Help
+        if HELP:
+            pass
+        # Heroes
+        currentHero = heroes[HERO_INDEX]
+        currentHeroText = getText(currentHero.name, 75, (0,0,0))
+        screen.blit(currentHeroText, (res(800) - currentHeroText.get_width()//2, 100))
+        screen.blit(p.transform.scale(currentHero.image, (currentHero.image.get_width()*4, currentHero.image.get_height()*4)), (res(800)-(currentHero.image.get_width()*2),(res(450)-(currentHero.image.get_height()*2))))
+        # Other UI Images
+        
+        # Buttons
+        backButton.draw(screen)
+        rightButton.draw(screen)
+        leftButton.draw(screen)
+        # Events
+        for event in p.event.get():
+            # Quit Event
+            if event.type == p.QUIT:
+                gameState = 'quit'
+            if event.type == p.MOUSEMOTION:
+                if backButton.check(p.mouse.get_pos()):
+                    backButton.toggleOn()
+                else:
+                    backButton.toggleOff()
+                if rightButton.check(p.mouse.get_pos()):
+                    rightButton.toggleOn()
+                else:
+                    rightButton.toggleOff()
+                if leftButton.check(p.mouse.get_pos()):
+                    leftButton.toggleOn()
+                else:
+                    leftButton.toggleOff()
+            if event.type == p.MOUSEBUTTONUP:
+                if backButton.check(p.mouse.get_pos()):
+                    click.play()
+                    gameState = 'game'
+                    main()
+                if rightButton.check(p.mouse.get_pos()):
+                    click.play()
+                    if HERO_INDEX + 1 < len(heroes):
+                        HERO_INDEX += 1
+                    else:
+                        HERO_INDEX = 0
+                if leftButton.check(p.mouse.get_pos()):
+                    if HERO_INDEX > 0:
+                        HERO_INDEX -= 1
+                    else:
+                        HERO_INDEX = len(heroes) - 1
+            if event.type == p.KEYUP:
+                if event.key == p.K_ESCAPE:
+                    gameState = 'pausemenu'
+                    main()
+        # Post-Event Code
+        PREV_STATE = 'heroes'
+        # Update the display
+        clock.tick(FPS_SETTING)
+        p.display.flip()
+    while gameState == 'artifacts':
+        # Pre-Event Code
+        screen.fill((255,255,255))
+        # Events
+        for event in p.event.get():
+            # Quit Event
+            if event.type == p.QUIT:
+                gameState = 'quit'
+            if event.type == p.KEYUP:
+                if event.key == p.K_ESCAPE:
+                    gameState = 'pausemenu'
+                    main()
+        # Post-Event Code
+        PREV_STATE = 'artifacts'
+        # Update the display
+        clock.tick(FPS_SETTING)
+        p.display.flip()
+    while gameState == 'skills':
+        # Pre-Event Code
+        screen.fill((255,255,255))
+        # Events
+        for event in p.event.get():
+            # Quit Event
+            if event.type == p.QUIT:
+                gameState = 'quit'
+            if event.type == p.KEYUP:
+                if event.key == p.K_ESCAPE:
+                    gameState = 'pausemenu'
+                    main()
+        # Post-Event Code
+        PREV_STATE = 'skills'
+        # Update the display
+        clock.tick(FPS_SETTING)
+        p.display.flip()
+    while gameState == 'prestige':
+        # Pre-Event Code
+        screen.fill((255,255,255))
+        # Events
+        for event in p.event.get():
+            # Quit Event
+            if event.type == p.QUIT:
+                gameState = 'quit'
+            if event.type == p.KEYUP:
+                if event.key == p.K_ESCAPE:
+                    gameState = 'pausemenu'
+                    main()
+        # Post-Event Code
+        PREV_STATE = 'prestige'
+        # Update the display
+        clock.tick(FPS_SETTING)
+        p.display.flip()
+
+'''
+FUNCTIONS
+'''
+
+def setHovering(button):
+    if button.check(p.mouse.get_pos()):
+        button.toggleOn()
+    else:
+        button.toggleOff()
+        
+def drawText(screen, text, size, x, y, color):
+    myfont = p.font.Font('Fonts/' + FONT_NAME, size)
+    textsurface = myfont.render(text, False, color)
+    screen.blit(textsurface,(x,y))
+    return textsurface
+
+def getText(text, size, color):
+    myfont = p.font.Font('Fonts/' + FONT_NAME, size)
+    textsurface = myfont.render(text, False, color)
+    return textsurface
+
+def res(num):
+    return int(num*RESOLUTION_SETTING)
+
+def resImage(image):
+    return p.transform.scale(image, (int(image.get_width()*RESOLUTION_SETTING), int(image.get_height()*RESOLUTION_SETTING)))
+
+def getImage(path, *args):
+    if len(args) == 2:
+        return p.transform.scale(p.image.load(path), (args[0],args[1]))
+    else:
+        return p.image.load(path)
+
+def toNum(myBoolean):
+    if myBoolean:
+        return 1
+    else:
+        return 0
+
+def toBoolean(myNum):
+    if myNum == 1:
+        return True
+    else:
+        return False
+
 def getData():
-    global FULLSCREEN, RESOLUTION_SETTING, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP
-    return [toNum(FULLSCREEN), int(RESOLUTION_SETTING*900), FPS_SETTING, toNum(HELP)]
+    global FULLSCREEN, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP, MONEY, STAGE, HERO_INDEX
+    return [toNum(FULLSCREEN), int(RESOLUTION_SETTING*900), FPS_SETTING, toNum(HELP), MONEY, STAGE, HERO_INDEX]
 
 
 setup()
