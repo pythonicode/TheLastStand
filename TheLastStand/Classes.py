@@ -6,6 +6,7 @@ Created on Mar 13, 2019
 
 import pygame as p
 import time
+import math
 
 class TextButton:
     
@@ -145,7 +146,8 @@ class Hero:
         self.image = idleImage
         self.loc = location
         
-        self.upgradeCost = int(200*(tier-1))
+        self.upgradeCost = int(math.pow(25, self.tier-1)*math.pow(2, math.pow(self.level, 0.3))*(self.level+1))
+        self.dps = int(5*math.pow(20+self.tier, self.tier+0.5*(self.level//1000)-1)*math.pow(2, math.pow(self.level, 0.3))*(self.level))
         
     def draw(self, screen):
         screen.blit(self.image, (self.x, self.y))
@@ -160,6 +162,15 @@ class Hero:
             if self.loc == 'right' or self.loc == 'r':
                 self.x = self.xInit - self.animationImage2.get_width() + self.animationImage1.get_width()
             self.y = self.yInit
+    
+    def getUpgradeCost(self, lv):
+        return int(math.pow(25, self.tier-1)*math.pow(2, math.pow(lv, 0.3))*(lv+1))
+    
+    def getTotalUpgradeCost(self, amount):
+        totalUpgradeCost = 0
+        for i in range(amount):
+            totalUpgradeCost += self.getUpgradeCost(self.level+i)
+        return totalUpgradeCost
             
 class Titan:
     
@@ -176,30 +187,64 @@ class Titan:
         self.animationImage2 = image2
         self.image = self.animationImage1
         
+        self.alive = True
+        self.toDraw = True
+        self.alpha = 255
+        self.health = int(math.pow(self.tier, 2)*(math.pow(1.5, math.sqrt(self.level))+8*self.level + math.pow(self.level, 2)))
+        
     def draw(self, screen):
-        screen.blit(self.image, (self.x, self.y))
+        if self.toDraw:
+            blit_alpha(screen, self.image, (self.x, self.y), self.alpha)
     
     def update(self, mSecs):
-        if int(time.clock()*1000)%(mSecs*2) <= mSecs:
-            self.image = self.animationImage1
-            self.y = self.yInit
-        else:
-            self.image = self.animationImage2
-            self.y = self.yInit + (self.animationImage1.get_height()-self.animationImage2.get_height())*2
-        if int(time.clock()*1000)%(mSecs) >= mSecs//2 and int(time.clock()*1000)%(mSecs) <= mSecs//2 + 100:
-            return time.clock()
+        if self.alive:
+            if int(time.clock()*1000)%(mSecs*2) <= mSecs:
+                self.image = self.animationImage1
+                self.y = self.yInit
+            else:
+                self.image = self.animationImage2
+                self.y = self.yInit + (self.animationImage1.get_height()-self.animationImage2.get_height())*2
+            if int(time.clock()*1000)%(mSecs) >= mSecs//2 and int(time.clock()*1000)%(mSecs) <= mSecs//2 + 100:
+                return time.clock()
         return 0
     
+    def checkAlive(self, currentTime):
+        if not self.alive:
+            if time.clock()-currentTime <= 0.1:
+                self.alpha = 200
+                return False
+            elif time.clock()-currentTime <= 0.2:
+                self.alpha = 150
+                return False
+            elif time.clock()-currentTime <= 0.3:
+                self.alpha = 100
+                return False
+            elif time.clock()-currentTime <= 0.4:
+                self.alpha = 50
+                return False
+            else:
+                self.alpha = 0
+                self.toDraw = False
+                return True
+        
     def wobble(self, currentTime):
-        if time.clock()-currentTime <= 0.025:
-            self.x = self.xInit - 5
-            return False
-        elif time.clock()-currentTime <= 0.05:
-            self.x = self.xInit + 5
-            return False
+        if self.alive:
+            if time.clock()-currentTime <= 0.025:
+                self.x = self.xInit - 5
+                return False
+            elif time.clock()-currentTime <= 0.05:
+                self.x = self.xInit + 5
+                return False
+            else:
+                self.x = self.xInit
+                return True
+            
+    def takeDamage(self, damage):
+        if self.health > damage:
+            self.health -= damage
         else:
-            self.x = self.xInit
-            return True
+            self.health -= damage
+            self.alive = False
     
     def check(self, pos):
         mouseX = pos[0]
@@ -209,5 +254,12 @@ class Titan:
         return False
 
 
-
+def blit_alpha(target, source, location, opacity):
+        x = location[0]
+        y = location[1]
+        temp = p.Surface((source.get_width(), source.get_height())).convert()
+        temp.blit(target, (-x, -y))
+        temp.blit(source, (0, 0))
+        temp.set_alpha(opacity)        
+        target.blit(temp, location)
 

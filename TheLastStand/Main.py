@@ -16,7 +16,7 @@ import time
 # Set up the Window
 def setup():  
     global gameState, clock, screen, game
-    global FULLSCREEN, RESOLUTION_SETTING, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP, MONEY, STAGE, HERO_INDEX
+    global FULLSCREEN, RESOLUTION_SETTING, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP, MONEY, TOKENS, STAGE, HERO_INDEX, HERO_LEVELS
     p.init()
     # RETRIEVING DATA FROM SAVE FILE
     game = GameData('Saves/Save.txt')
@@ -28,8 +28,12 @@ def setup():
     FPS_SETTING = data[2]
     HELP = toBoolean(data[3])
     MONEY = data[4]
-    STAGE = data[5]
-    HERO_INDEX = data[6]
+    TOKENS = data[5]
+    STAGE = data[6]
+    HERO_INDEX = data[7]
+    HERO_LEVELS = []
+    for i in range(20):
+        HERO_LEVELS.append(data[i+8])
     clock = p.time.Clock()
     # Display mode (sets width and height for the window)
     if FULLSCREEN:
@@ -46,11 +50,12 @@ def setup():
 # Main function that runs the game
 def main():
     global gameState, clock, screen, game
-    global FULLSCREEN, RESOLUTION_SETTING, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP, PREV_STATE, MONEY, STAGE, HERO_INDEX
+    global FULLSCREEN, RESOLUTION_SETTING, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP, PREV_STATE, MONEY, TOKENS, STAGE, HERO_INDEX, HERO_LEVELS
     # Misc Objects
     click = p.mixer.Sound('Sounds/click.wav')
     helpColor = (255,128,128)
     attackTime = time.clock()
+    checkAliveTime = time.clock()
     # Main Menu Objects
     startButton = TextButton(res(1120), res(450), 'Play', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
     settingsButton = TextButton(res(1070+(res(40)-40)), res(550), 'Settings', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
@@ -75,11 +80,11 @@ def main():
     titan1 = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
     titans = [titan1]
     # Heroes
-    pewdiepieHero = Hero('PewDiePie', 1, 0, res(425), res(380), resImage(getImage('Images/pewdiepie.png')), resImage(getImage('Images/pewdiepie_attack.png')), 'left')
-    mrbeastHero = Hero('Mr. Beast', 2, 0, res(1130), res(280), resImage(getImage('Images/mrbeast.png')), resImage(getImage('Images/mrbeast_attack.png')), 'right')
-    marziaHero = Hero('Marzia', 3, 0, res(470), res(600), resImage(getImage('Images/marzia.png')), resImage(getImage('Images/marzia_attack.png')), 'left')
-    jackHero = Hero('Jack Septic Eye', 4, 0, res(1150), res(500), resImage(getImage('Images/jack.png')), resImage(getImage('Images/jack_attack.png')), 'right')
-    markiplierHero = Hero('Markiplier', 5, 0, res(400), res(500), resImage(getImage('Images/markiplier.png')), resImage(getImage('Images/markiplier_attack.png')), 'left')
+    pewdiepieHero = Hero('PewDiePie', 1, HERO_LEVELS[0], res(425), res(380), resImage(getImage('Images/pewdiepie.png')), resImage(getImage('Images/pewdiepie_attack.png')), 'left')
+    mrbeastHero = Hero('Mr. Beast', 2, HERO_LEVELS[1], res(1130), res(280), resImage(getImage('Images/mrbeast.png')), resImage(getImage('Images/mrbeast_attack.png')), 'right')
+    marziaHero = Hero('Marzia', 3, HERO_LEVELS[2], res(470), res(600), resImage(getImage('Images/marzia.png')), resImage(getImage('Images/marzia_attack.png')), 'left')
+    jackHero = Hero('Jack Septic Eye', 4, HERO_LEVELS[3], res(1150), res(500), resImage(getImage('Images/jack.png')), resImage(getImage('Images/jack_attack.png')), 'right')
+    markiplierHero = Hero('Markiplier', 5, HERO_LEVELS[4], res(400), res(500), resImage(getImage('Images/markiplier.png')), resImage(getImage('Images/markiplier_attack.png')), 'left')
     heroes = [pewdiepieHero, mrbeastHero, marziaHero, jackHero, markiplierHero]
     # Pause Menu
     mainMenuButton = TextButton(res(680), res(300), 'Main Menu', 'PixelSplitter-Bold.ttf', res(40), (255,255,255), (255,0,0))
@@ -334,6 +339,8 @@ def main():
                     gameState = 'prestige'
                     main()
                 if titan1.check(p.mouse.get_pos()):
+                    titan1.takeDamage(1)
+                    checkAliveTime = time.clock()
                     attackTime = time.clock()
             if event.type == p.KEYUP:
                 if event.key == p.K_ESCAPE:
@@ -342,6 +349,7 @@ def main():
                 if event.key == p.K_SPACE:
                     attackTime = time.clock()
         titan1.wobble(attackTime)
+        titan1.checkAlive(checkAliveTime)
         # Post-Event Code
         PREV_STATE = 'game'
         # Update the display
@@ -408,7 +416,12 @@ def main():
         screen.blit(currentHeroText, (res(800) - currentHeroText.get_width()//2, 100))
         screen.blit(p.transform.scale(currentHero.image, (currentHero.image.get_width()*4, currentHero.image.get_height()*4)), (res(800)-(currentHero.image.get_width()*2),(res(450)-(currentHero.image.get_height()*2))))
         # Other UI Images
-        
+        moneyImage = resImage(getImage('Images/money.png'))
+        moneyText = getText(str(MONEY), res(70), (0,0,0))
+        moneySurface = p.Surface((moneyImage.get_width()+moneyText.get_width()+20, moneyText.get_height()+10), p.SRCALPHA)
+        moneySurface.blit(moneyImage, (0,(moneyText.get_height()-moneyImage.get_height())//2))
+        moneySurface.blit(moneyText, (moneyImage.get_width()+20, 0))
+        screen.blit(moneySurface, (res(1600) - moneySurface.get_width() - res(100), res(50)))
         # Buttons
         backButton.draw(screen)
         rightButton.draw(screen)
@@ -537,9 +550,18 @@ def resImage(image):
 
 def getImage(path, *args):
     if len(args) == 2:
-        return p.transform.scale(p.image.load(path), (args[0],args[1]))
+        return p.transform.scale(p.image.load(path).convert_alpha(), (args[0],args[1]))
     else:
-        return p.image.load(path)
+        return p.image.load(path).convert_alpha()
+
+def blit_alpha(target, source, location, opacity):
+        x = location[0]
+        y = location[1]
+        temp = p.Surface((source.get_width(), source.get_height())).convert()
+        temp.blit(target, (-x, -y))
+        temp.blit(source, (0, 0))
+        temp.set_alpha(opacity)        
+        target.blit(temp, location)
 
 def toNum(myBoolean):
     if myBoolean:
@@ -552,10 +574,19 @@ def toBoolean(myNum):
         return True
     else:
         return False
+    
+def prettyNum(num):
+    if num < 1000:
+        return str(num)
+    elif num < 1000000000000000:
+        if len(num)//3 == 0:
+            return str(num[0])+'.'+str(num[1])+str(num[2])+'K'
 
 def getData():
-    global FULLSCREEN, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP, MONEY, STAGE, HERO_INDEX
-    return [toNum(FULLSCREEN), int(RESOLUTION_SETTING*900), FPS_SETTING, toNum(HELP), MONEY, STAGE, HERO_INDEX]
+    data = [toNum(FULLSCREEN), int(RESOLUTION_SETTING*900), FPS_SETTING, toNum(HELP), MONEY, TOKENS, STAGE, HERO_INDEX]
+    for lv in HERO_LEVELS:
+        data.append(lv)
+    return data
 
 
 setup()
