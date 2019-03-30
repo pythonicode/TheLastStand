@@ -212,22 +212,11 @@ class Titan:
                 return time.perf_counter()
         return 0
     
-    def checkAlive(self, currentTime):
+    def checkAlive(self):
         if not self.alive:
-            if time.perf_counter()-currentTime <= 0.1:
-                self.alpha = 200
-                return False
-            elif time.perf_counter()-currentTime <= 0.2:
-                self.alpha = 150
-                return False
-            elif time.perf_counter()-currentTime <= 0.3:
-                self.alpha = 100
-                return False
-            elif time.perf_counter()-currentTime <= 0.4:
-                self.alpha = 50
-                return False
+            if self.alpha > 0:
+                self.alpha -= 10
             else:
-                self.alpha = 0
                 self.toDraw = False
                 return True
         
@@ -246,6 +235,7 @@ class Titan:
     def takeDamage(self, damage):
         if self.health > damage:
             self.health -= damage
+            self.alive = True
         else:
             self.health -= damage
             self.alive = False
@@ -256,6 +246,9 @@ class Titan:
         if mouseX > self.x and mouseX < (self.x+self.image.get_width()) and mouseY > self.y and mouseY < (self.y+self.image.get_height()):
             return True
         return False
+    
+    def getHealth(self):
+        return int(math.pow(self.tier, 2)*(math.pow(1.5, math.sqrt(self.level))+8*self.level + math.pow(self.level, 2)))
 
 def blit_alpha(target, source, location, opacity):
         x = location[0]

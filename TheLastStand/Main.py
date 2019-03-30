@@ -8,7 +8,7 @@ from Global import *
 from Classes import *
 
 import pygame as p
-import random
+import random as r
 import math
 import time
 
@@ -16,7 +16,7 @@ import time
 # Set up the Window
 def setup():  
     global gameState, clock, screen, game
-    global FULLSCREEN, RESOLUTION_SETTING, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP, VOLUME, MONEY, TOKENS, STAGE, HERO_INDEX, HERO_LEVELS
+    global FULLSCREEN, RESOLUTION_SETTING, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP, VOLUME, MONEY, TOKENS, STAGE, HERO_INDEX, HERO_LEVELS, TITAN_HEALTH, TITAN_INDEX
     p.init()
     # RETRIEVING DATA FROM SAVE FILE
     game = GameData('Saves/Save.txt')
@@ -33,6 +33,8 @@ def setup():
     STAGE = data[7]
     HERO_INDEX = data[8]
     HERO_LEVELS = []
+    TITAN_HEALTH = int((math.pow(1.5, math.sqrt(STAGE))+8*STAGE + math.pow(STAGE, 2)))
+    TITAN_INDEX = 1
     for i in range(20):
         HERO_LEVELS.append(data[i+9])
     clock = p.time.Clock()
@@ -52,7 +54,7 @@ def setup():
 # Main function that runs the game
 def main():
     global gameState, clock, screen, game
-    global FULLSCREEN, RESOLUTION_SETTING, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP, VOLUME, PREV_STATE, MONEY, TOKENS, STAGE, HERO_INDEX, HERO_LEVELS
+    global FULLSCREEN, RESOLUTION_SETTING, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP, VOLUME, PREV_STATE, MONEY, TOKENS, STAGE, HERO_INDEX, HERO_LEVELS, TITAN_HEALTH, TITAN_INDEX
     # Sounds
     click = p.mixer.Sound('Sounds/click.wav')
     click.set_volume(VOLUME/100)
@@ -83,7 +85,9 @@ def main():
     prestigeButton = TextButton(res(1295), res(650), 'Prestige', 'PixelSplitter-Bold.ttf', res(50), (0,0,0), (255,0,0))
     # Titans
     titan1 = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+    titan1.health = TITAN_HEALTH
     titans = [titan1]
+    currentTitan = titans[r.randint(0,len(titans)-1)]
     # Heroes Objects
     pewdiepieHero = Hero('PewDiePie', 1, HERO_LEVELS[0], res(425), res(380), resImage(getImage('Images/pewdiepie.png')), resImage(getImage('Images/pewdiepie_attack.png')), 'left')
     mrbeastHero = Hero('Mr. Beast', 2, HERO_LEVELS[1], res(1130), res(280), resImage(getImage('Images/mrbeast.png')), resImage(getImage('Images/mrbeast_attack.png')), 'right')
@@ -312,12 +316,29 @@ def main():
         # Game Screen
         p.draw.rect(screen, (0,0,0), p.Rect(res(340), 0, res(920), res(920)))
         p.draw.rect(screen, (255,255,255), p.Rect(res(350), 0, res(900), res(900)))
+        drawText(screen, 'Stage', res(50), res(715), res(24), (0,0,0))
+        stageText = getText(str(STAGE), res(40), (0,0,0))
+        screen.blit(stageText, (res(800)-stageText.get_width()//2, res(80)))
         # Titans
-        random.randint()
-        titan1.draw(screen)
-        titan1.update(1000)
-        if titan1.update(1000) > 0:
-            attackTime = titan1.update(1000)
+        currentTitan.draw(screen)
+        currentTitan.update(1000)
+        if currentTitan.update(1000) > 0:
+            attackTime = currentTitan.update(1000)
+        if currentTitan.alive:
+            p.draw.rect(screen, (255,0,0), p.Rect(res(500), currentTitan.y//2+res(50), int(res(600)*(currentTitan.health/currentTitan.getHealth())), res(30)))
+            drawText(screen, prettyNum(currentTitan.health), res(20), res(510), currentTitan.y//2+res(54), (255,255,255))
+        if not currentTitan.toDraw:
+            if TITAN_INDEX < 10:
+                TITAN_INDEX += 1
+                currentTitan = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+            else:
+                TITAN_INDEX = 1
+                STAGE += 1
+                currentTitan = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+        tseriesIcon = resImage(getImage('Images/tseries_icon.png'))
+        screen.blit(tseriesIcon, (res(1200)-stageText.get_width()//2, res(25)))
+        titanNumText = getText(str(11-TITAN_INDEX), res(40), (0,0,0))
+        screen.blit(titanNumText, (res(1150)-titanNumText.get_width(), res(20)))
         # Heroes
         for hero in heroes:
             hero.draw(screen)
@@ -363,18 +384,17 @@ def main():
                     click.play()
                     gameState = 'prestige'
                     main()
-                if titan1.check(p.mouse.get_pos()):
-                    titan1.takeDamage(1)
-                    checkAliveTime = time.perf_counter()
-                    attackTime = time.perf_counter()
             if event.type == p.KEYUP:
                 if event.key == p.K_ESCAPE:
                     gameState = 'pausemenu'
                     main()
                 if event.key == p.K_SPACE:
-                    attackTime = time.perf_counter()
-        titan1.wobble(attackTime)
-        titan1.checkAlive(checkAliveTime)
+                    if currentTitan.alive:
+                        currentTitan.takeDamage(STAGE)
+                        TITAN_HEALTH = currentTitan.health
+                        attackTime = time.perf_counter()
+        currentTitan.wobble(attackTime)
+        currentTitan.checkAlive()
         # Post-Event Code
         PREV_STATE = 'game'
         # Update the display
