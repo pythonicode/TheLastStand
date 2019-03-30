@@ -7,6 +7,7 @@ Created on Mar 13, 2019
 import pygame as p
 import time
 import math
+import threading
 
 class TextButton:
     
@@ -153,7 +154,7 @@ class Hero:
         screen.blit(self.image, (self.x, self.y))
     
     def update(self, mSecs):
-        if int(time.clock()*1000)%(mSecs*2) <= mSecs:
+        if int(time.perf_counter()*1000)%(mSecs*2) <= mSecs:
             self.image = self.animationImage1
             self.x = self.xInit
             self.y = self.yInit
@@ -164,13 +165,16 @@ class Hero:
             self.y = self.yInit
     
     def getUpgradeCost(self, lv):
-        return int(math.pow(25, self.tier-1)*math.pow(2, math.pow(lv, 0.3))*(lv+1))
+        return int(math.pow(25, self.tier-1)*math.pow(2, math.pow(lv, 0.35))*(lv+1))
     
     def getTotalUpgradeCost(self, amount):
         totalUpgradeCost = 0
         for i in range(amount):
             totalUpgradeCost += self.getUpgradeCost(self.level+i)
         return totalUpgradeCost
+    
+    def getDPS(self, lv):
+        return int(5*math.pow(20+self.tier, self.tier+0.5*(lv//1000)-1)*math.pow(2, math.pow(lv, 0.3))*(lv))
             
 class Titan:
     
@@ -198,28 +202,28 @@ class Titan:
     
     def update(self, mSecs):
         if self.alive:
-            if int(time.clock()*1000)%(mSecs*2) <= mSecs:
+            if int(time.perf_counter()*1000)%(mSecs*2) <= mSecs:
                 self.image = self.animationImage1
                 self.y = self.yInit
             else:
                 self.image = self.animationImage2
                 self.y = self.yInit + (self.animationImage1.get_height()-self.animationImage2.get_height())*2
-            if int(time.clock()*1000)%(mSecs) >= mSecs//2 and int(time.clock()*1000)%(mSecs) <= mSecs//2 + 100:
-                return time.clock()
+            if int(time.perf_counter()*1000)%(mSecs) >= mSecs//2 and int(time.perf_counter()*1000)%(mSecs) <= mSecs//2 + 100:
+                return time.perf_counter()
         return 0
     
     def checkAlive(self, currentTime):
         if not self.alive:
-            if time.clock()-currentTime <= 0.1:
+            if time.perf_counter()-currentTime <= 0.1:
                 self.alpha = 200
                 return False
-            elif time.clock()-currentTime <= 0.2:
+            elif time.perf_counter()-currentTime <= 0.2:
                 self.alpha = 150
                 return False
-            elif time.clock()-currentTime <= 0.3:
+            elif time.perf_counter()-currentTime <= 0.3:
                 self.alpha = 100
                 return False
-            elif time.clock()-currentTime <= 0.4:
+            elif time.perf_counter()-currentTime <= 0.4:
                 self.alpha = 50
                 return False
             else:
@@ -229,10 +233,10 @@ class Titan:
         
     def wobble(self, currentTime):
         if self.alive:
-            if time.clock()-currentTime <= 0.025:
+            if time.perf_counter()-currentTime <= 0.025:
                 self.x = self.xInit - 5
                 return False
-            elif time.clock()-currentTime <= 0.05:
+            elif time.perf_counter()-currentTime <= 0.05:
                 self.x = self.xInit + 5
                 return False
             else:
@@ -252,7 +256,6 @@ class Titan:
         if mouseX > self.x and mouseX < (self.x+self.image.get_width()) and mouseY > self.y and mouseY < (self.y+self.image.get_height()):
             return True
         return False
-
 
 def blit_alpha(target, source, location, opacity):
         x = location[0]

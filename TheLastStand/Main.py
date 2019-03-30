@@ -16,7 +16,7 @@ import time
 # Set up the Window
 def setup():  
     global gameState, clock, screen, game
-    global FULLSCREEN, RESOLUTION_SETTING, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP, MONEY, TOKENS, STAGE, HERO_INDEX, HERO_LEVELS
+    global FULLSCREEN, RESOLUTION_SETTING, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP, VOLUME, MONEY, TOKENS, STAGE, HERO_INDEX, HERO_LEVELS
     p.init()
     # RETRIEVING DATA FROM SAVE FILE
     game = GameData('Saves/Save.txt')
@@ -27,13 +27,14 @@ def setup():
     WINDOW_HEIGHT = res(900)
     FPS_SETTING = data[2]
     HELP = toBoolean(data[3])
-    MONEY = data[4]
-    TOKENS = data[5]
-    STAGE = data[6]
-    HERO_INDEX = data[7]
+    VOLUME = data[4]
+    MONEY = data[5]
+    TOKENS = data[6]
+    STAGE = data[7]
+    HERO_INDEX = data[8]
     HERO_LEVELS = []
     for i in range(20):
-        HERO_LEVELS.append(data[i+8])
+        HERO_LEVELS.append(data[i+9])
     clock = p.time.Clock()
     # Display mode (sets width and height for the window)
     if FULLSCREEN:
@@ -43,6 +44,7 @@ def setup():
     # Start the Mixer and Start playing Music
     p.mixer.init()
     p.mixer.music.load("Sounds/music.mp3") 
+    p.mixer.music.set_volume(VOLUME/100)
     p.mixer.music.play(-1,0.0)
     # Initial gameState
     gameState = 'mainmenu'
@@ -50,12 +52,15 @@ def setup():
 # Main function that runs the game
 def main():
     global gameState, clock, screen, game
-    global FULLSCREEN, RESOLUTION_SETTING, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP, PREV_STATE, MONEY, TOKENS, STAGE, HERO_INDEX, HERO_LEVELS
-    # Misc Objects
+    global FULLSCREEN, RESOLUTION_SETTING, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP, VOLUME, PREV_STATE, MONEY, TOKENS, STAGE, HERO_INDEX, HERO_LEVELS
+    # Sounds
     click = p.mixer.Sound('Sounds/click.wav')
+    click.set_volume(VOLUME/100)
+    sounds = [click]
+    # Misc Objects
     helpColor = (255,128,128)
-    attackTime = time.clock()
-    checkAliveTime = time.clock()
+    attackTime = time.perf_counter()
+    checkAliveTime = time.perf_counter()
     # Main Menu Objects
     startButton = TextButton(res(1120), res(450), 'Play', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
     settingsButton = TextButton(res(1070+(res(40)-40)), res(550), 'Settings', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
@@ -79,13 +84,17 @@ def main():
     # Titans
     titan1 = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
     titans = [titan1]
-    # Heroes
+    # Heroes Objects
     pewdiepieHero = Hero('PewDiePie', 1, HERO_LEVELS[0], res(425), res(380), resImage(getImage('Images/pewdiepie.png')), resImage(getImage('Images/pewdiepie_attack.png')), 'left')
     mrbeastHero = Hero('Mr. Beast', 2, HERO_LEVELS[1], res(1130), res(280), resImage(getImage('Images/mrbeast.png')), resImage(getImage('Images/mrbeast_attack.png')), 'right')
     marziaHero = Hero('Marzia', 3, HERO_LEVELS[2], res(470), res(600), resImage(getImage('Images/marzia.png')), resImage(getImage('Images/marzia_attack.png')), 'left')
     jackHero = Hero('Jack Septic Eye', 4, HERO_LEVELS[3], res(1150), res(500), resImage(getImage('Images/jack.png')), resImage(getImage('Images/jack_attack.png')), 'right')
     markiplierHero = Hero('Markiplier', 5, HERO_LEVELS[4], res(400), res(500), resImage(getImage('Images/markiplier.png')), resImage(getImage('Images/markiplier_attack.png')), 'left')
     heroes = [pewdiepieHero, mrbeastHero, marziaHero, jackHero, markiplierHero]
+    unlockButton = TextButton(res(700), res(700), 'Unlock', 'PixelSplitter-Bold.ttf', res(50), (0,0,0), (255,0,0))
+    upgrade1Button = TextButton(res(275), res(700), 'Upgrade 1', 'PixelSplitter-Bold.ttf', res(50), (0,0,0), (255,0,0))
+    upgrade10Button = TextButton(res(645), res(700), 'Upgrade 10', 'PixelSplitter-Bold.ttf', res(50), (0,0,0), (255,0,0))
+    upgrade100Button = TextButton(res(1040), res(700), 'Upgrade 100', 'PixelSplitter-Bold.ttf', res(50), (0,0,0), (255,0,0))
     # Pause Menu
     mainMenuButton = TextButton(res(680), res(300), 'Main Menu', 'PixelSplitter-Bold.ttf', res(40), (255,255,255), (255,0,0))
     settingsButton2 = TextButton(res(694), res(400), 'Settings', 'PixelSplitter-Bold.ttf', res(40), (255,255,255), (255,0,0))
@@ -192,6 +201,12 @@ def main():
         else:
             helpOnButton.toggleOff()
             helpOffButton.toggleOn()
+        # Volume Bar
+        drawText(screen, 'Volume: ', 40, res(200), res(600), (0,0,0))
+        drawText(screen, str(VOLUME), 40, res(1300), res(600), (0,0,0))
+        p.draw.rect(screen, (0,0,0), p.Rect(res(1200), res(600), 10, 40))
+        p.draw.rect(screen, (255,0,0), p.Rect(res(200)+200, res(600), 10, 40))
+        p.draw.rect(screen, (255,0,0), p.Rect(res(200)+220, res(605), int((res(1170)-(res(200)+200))*VOLUME/100), 30))
         # Back
         backButton.draw(screen)
         # Events
@@ -255,6 +270,7 @@ def main():
                     main()
                 # Back Button
                 if backButton.check(p.mouse.get_pos()):
+                    click.play()
                     gameState = PREV_STATE
                     main()
                 # Click Event for Help Buttons
@@ -266,6 +282,14 @@ def main():
                     click.play()
                     HELP = False
                     main()
+                # Set Volume
+                if p.mouse.get_pos()[0] >= res(200) + 220 and p.mouse.get_pos()[0] <= res(1200) and p.mouse.get_pos()[1] >= res(605) and p.mouse.get_pos()[1] <= res(605) + 30:
+                    VOLUME = int((p.mouse.get_pos()[0]-(res(200) + 220))*100/int((res(1170)-(res(200)+200))))
+                    if VOLUME > 100:
+                        VOLUME = 100
+                    p.mixer.music.set_volume(VOLUME/100)
+                    for sound in sounds:
+                        sound.set_volume(VOLUME/100)
                 # Save
                 game.save(getData())
             if event.type == p.MOUSEMOTION:
@@ -289,6 +313,7 @@ def main():
         p.draw.rect(screen, (0,0,0), p.Rect(res(340), 0, res(920), res(920)))
         p.draw.rect(screen, (255,255,255), p.Rect(res(350), 0, res(900), res(900)))
         # Titans
+        random.randint()
         titan1.draw(screen)
         titan1.update(1000)
         if titan1.update(1000) > 0:
@@ -340,14 +365,14 @@ def main():
                     main()
                 if titan1.check(p.mouse.get_pos()):
                     titan1.takeDamage(1)
-                    checkAliveTime = time.clock()
-                    attackTime = time.clock()
+                    checkAliveTime = time.perf_counter()
+                    attackTime = time.perf_counter()
             if event.type == p.KEYUP:
                 if event.key == p.K_ESCAPE:
                     gameState = 'pausemenu'
                     main()
                 if event.key == p.K_SPACE:
-                    attackTime = time.clock()
+                    attackTime = time.perf_counter()
         titan1.wobble(attackTime)
         titan1.checkAlive(checkAliveTime)
         # Post-Event Code
@@ -412,20 +437,55 @@ def main():
             pass
         # Heroes
         currentHero = heroes[HERO_INDEX]
-        currentHeroText = getText(currentHero.name, 75, (0,0,0))
-        screen.blit(currentHeroText, (res(800) - currentHeroText.get_width()//2, 100))
+        currentHeroSub = getText('LEVEL ' + str(currentHero.level) + '    DPS ' + prettyNum(currentHero.getDPS(currentHero.level)), res(50), (0,0,0))
+        if currentHero.level > 0:
+            screen.blit(currentHeroSub, (res(800)-currentHeroSub.get_width()//2, res(150)))
+        screen.blit(getText(currentHero.name, 75, (0,0,0)), (res(800) - getText(currentHero.name, 75, (0,0,0)).get_width()//2, res(50)))
         screen.blit(p.transform.scale(currentHero.image, (currentHero.image.get_width()*4, currentHero.image.get_height()*4)), (res(800)-(currentHero.image.get_width()*2),(res(450)-(currentHero.image.get_height()*2))))
         # Other UI Images
         moneyImage = resImage(getImage('Images/money.png'))
-        moneyText = getText(str(MONEY), res(70), (0,0,0))
+        moneyText = getText(prettyNum(MONEY), res(70), (0,0,0))
         moneySurface = p.Surface((moneyImage.get_width()+moneyText.get_width()+20, moneyText.get_height()+10), p.SRCALPHA)
         moneySurface.blit(moneyImage, (0,(moneyText.get_height()-moneyImage.get_height())//2))
         moneySurface.blit(moneyText, (moneyImage.get_width()+20, 0))
-        screen.blit(moneySurface, (res(1600) - moneySurface.get_width() - res(100), res(50)))
+        screen.blit(moneySurface, (res(1600) - moneySurface.get_width() - res(50), res(50)))
         # Buttons
         backButton.draw(screen)
         rightButton.draw(screen)
         leftButton.draw(screen)
+        if currentHero.level > 0:
+            # Upgrade Button 1
+            upgrade1Button.draw(screen)
+            moneyImage = resImage(getImage('Images/money.png', 40, 40))
+            moneyText = getText(prettyNum(currentHero.getUpgradeCost(currentHero.level)), res(45), (0,0,0))
+            moneySurface = p.Surface((moneyImage.get_width()+moneyText.get_width()+10, moneyText.get_height()+10), p.SRCALPHA)
+            moneySurface.blit(moneyImage, (0,(moneyText.get_height()-moneyImage.get_height())//2))
+            moneySurface.blit(moneyText, (moneyImage.get_width()+10, 0))
+            screen.blit(moneySurface, (res(800) - moneySurface.get_width()//2 - res(400), res(760)))
+            # Upgrade Button 2
+            upgrade10Button.draw(screen)
+            moneyImage = resImage(getImage('Images/money.png', 40, 40))
+            moneyText = getText(prettyNum(currentHero.getTotalUpgradeCost(10)), res(45), (0,0,0))
+            moneySurface = p.Surface((moneyImage.get_width()+moneyText.get_width()+10, moneyText.get_height()+10), p.SRCALPHA)
+            moneySurface.blit(moneyImage, (0,(moneyText.get_height()-moneyImage.get_height())//2))
+            moneySurface.blit(moneyText, (moneyImage.get_width()+10, 0))
+            screen.blit(moneySurface, (res(800) - moneySurface.get_width()//2, res(760)))
+            # Upgrade Button 3
+            upgrade100Button.draw(screen)
+            moneyImage = resImage(getImage('Images/money.png', 40, 40))
+            moneyText = getText(prettyNum(currentHero.getTotalUpgradeCost(100)), res(45), (0,0,0))
+            moneySurface = p.Surface((moneyImage.get_width()+moneyText.get_width()+10, moneyText.get_height()+10), p.SRCALPHA)
+            moneySurface.blit(moneyImage, (0,(moneyText.get_height()-moneyImage.get_height())//2))
+            moneySurface.blit(moneyText, (moneyImage.get_width()+10, 0))
+            screen.blit(moneySurface, (res(800) - moneySurface.get_width()//2 + res(400), res(760)))
+        else:
+            unlockButton.draw(screen)
+            moneyImage = resImage(getImage('Images/money.png', 40, 40))
+            moneyText = getText(prettyNum(currentHero.getUpgradeCost(currentHero.level)), res(45), (0,0,0))
+            moneySurface = p.Surface((moneyImage.get_width()+moneyText.get_width()+10, moneyText.get_height()+10), p.SRCALPHA)
+            moneySurface.blit(moneyImage, (0,(moneyText.get_height()-moneyImage.get_height())//2))
+            moneySurface.blit(moneyText, (moneyImage.get_width()+10, 0))
+            screen.blit(moneySurface, (res(800) - moneySurface.get_width()//2, res(760)))
         # Events
         for event in p.event.get():
             # Quit Event
@@ -444,6 +504,22 @@ def main():
                     leftButton.toggleOn()
                 else:
                     leftButton.toggleOff()
+                if unlockButton.check(p.mouse.get_pos()):
+                    unlockButton.toggleOn()
+                else:
+                    unlockButton.toggleOff()
+                if upgrade1Button.check(p.mouse.get_pos()):
+                    upgrade1Button.toggleOn()
+                else:
+                    upgrade1Button.toggleOff()
+                if upgrade10Button.check(p.mouse.get_pos()):
+                    upgrade10Button.toggleOn()
+                else:
+                    upgrade10Button.toggleOff()
+                if upgrade100Button.check(p.mouse.get_pos()):
+                    upgrade100Button.toggleOn()
+                else:
+                    upgrade100Button.toggleOff()
             if event.type == p.MOUSEBUTTONUP:
                 if backButton.check(p.mouse.get_pos()):
                     click.play()
@@ -456,10 +532,37 @@ def main():
                     else:
                         HERO_INDEX = 0
                 if leftButton.check(p.mouse.get_pos()):
+                    click.play()
                     if HERO_INDEX > 0:
                         HERO_INDEX -= 1
                     else:
                         HERO_INDEX = len(heroes) - 1
+                if currentHero.level > 0:
+                    if upgrade1Button.check(p.mouse.get_pos()):
+                        if MONEY >= currentHero.getUpgradeCost(currentHero.level):
+                            click.play()
+                            MONEY -= currentHero.getUpgradeCost(currentHero.level)
+                            HERO_LEVELS[currentHero.tier-1] += 1
+                            currentHero.level += 1
+                    elif upgrade10Button.check(p.mouse.get_pos()):
+                        if MONEY >= currentHero.getTotalUpgradeCost(10):
+                            click.play()
+                            MONEY -= currentHero.getTotalUpgradeCost(10)
+                            HERO_LEVELS[currentHero.tier-1] += 10
+                            currentHero.level += 10
+                    elif upgrade100Button.check(p.mouse.get_pos()):
+                        if MONEY >= currentHero.getTotalUpgradeCost(100):
+                            click.play()
+                            MONEY -= currentHero.getTotalUpgradeCost(100)
+                            HERO_LEVELS[currentHero.tier-1] += 100
+                            currentHero.level += 100
+                else:
+                    if unlockButton.check(p.mouse.get_pos()):
+                        if MONEY >= currentHero.getUpgradeCost(currentHero.level):
+                            click.play()
+                            MONEY -= currentHero.getUpgradeCost(currentHero.level)
+                            HERO_LEVELS[currentHero.tier-1] += 1
+                            currentHero.level += 1         
             if event.type == p.KEYUP:
                 if event.key == p.K_ESCAPE:
                     gameState = 'pausemenu'
@@ -479,6 +582,7 @@ def main():
                 gameState = 'quit'
             if event.type == p.KEYUP:
                 if event.key == p.K_ESCAPE:
+                    click.play()
                     gameState = 'pausemenu'
                     main()
         # Post-Event Code
@@ -496,6 +600,7 @@ def main():
                 gameState = 'quit'
             if event.type == p.KEYUP:
                 if event.key == p.K_ESCAPE:
+                    click.play()
                     gameState = 'pausemenu'
                     main()
         # Post-Event Code
@@ -513,6 +618,7 @@ def main():
                 gameState = 'quit'
             if event.type == p.KEYUP:
                 if event.key == p.K_ESCAPE:
+                    click.play()
                     gameState = 'pausemenu'
                     main()
         # Post-Event Code
@@ -574,16 +680,32 @@ def toBoolean(myNum):
         return True
     else:
         return False
-    
+
 def prettyNum(num):
     if num < 1000:
         return str(num)
-    elif num < 1000000000000000:
-        if len(num)//3 == 0:
-            return str(num[0])+'.'+str(num[1])+str(num[2])+'K'
+    elif len(str(num)) <= 13:
+        temp = ''
+        if (len(str(num))-1)//3 == 1:
+            temp = str(num)[0]+str(num)[1]+str(num)[2]+'K'
+        elif (len(str(num))-1)//3 == 2:
+            temp = str(num)[0]+str(num)[1]+str(num)[2]+'M'
+        elif (len(str(num))-1)//3 == 3:
+            temp = str(num)[0]+str(num)[1]+str(num)[2]+'B'
+        else:
+            temp = str(num)[0]+str(num)[1]+str(num)[2]+'T'
+        if (len(str(num))-1)%3 == 0:
+            return temp[0]+'.'+temp[1:]
+        elif (len(str(num))-1)%3 == 1:
+            return temp[:2]+'.'+temp[2:]
+        else:
+            return temp
+    else:
+        return str(num)[0]+'.'+str(num)[1]+str(num)[2]+'e'+str(len(str(num))-1)
+    
 
 def getData():
-    data = [toNum(FULLSCREEN), int(RESOLUTION_SETTING*900), FPS_SETTING, toNum(HELP), MONEY, TOKENS, STAGE, HERO_INDEX]
+    data = [toNum(FULLSCREEN), int(RESOLUTION_SETTING*900), FPS_SETTING, toNum(HELP), VOLUME, MONEY, TOKENS, STAGE, HERO_INDEX]
     for lv in HERO_LEVELS:
         data.append(lv)
     return data
