@@ -43,6 +43,8 @@ def setup():
         screen = p.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), p.FULLSCREEN)
     else:
         screen = p.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    p.display.set_caption('The Last Stand')
+    p.display.set_icon(getImage('Images/pewdiepieicon.png'))
     # Start the Mixer and Start playing Music
     p.mixer.init()
     p.mixer.music.load("Sounds/music.mp3") 
@@ -62,7 +64,7 @@ def main():
     # Misc Objects
     helpColor = (255,128,128)
     attackTime = time.perf_counter()
-    checkAliveTime = time.perf_counter()
+    lastTime = 0.5
     # Main Menu Objects
     startButton = TextButton(res(1120), res(450), 'Play', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
     settingsButton = TextButton(res(1070+(res(40)-40)), res(550), 'Settings', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
@@ -80,20 +82,30 @@ def main():
     helpOffButton = TextButton(res(1200), res(500), 'Off', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
     # Game Objects
     heroesButton = TextButton(res(60), res(250), 'Heroes', 'PixelSplitter-Bold.ttf', res(50), (0,0,0), (255,0,0))
+    heroImage1 = resImage(getImage('Images/markiplier_locked.png'))
+    heroImage1 = p.transform.scale(heroImage1, (int(heroImage1.get_width()*1.5), int(heroImage1.get_height()*1.5)))
+    heroImage2 = resImage(getImage('Images/markiplier_locked.png'))
+    heroImage2 = p.transform.scale(heroImage2, (int(heroImage2.get_width()*1.5), int(heroImage2.get_height()*1.5)))
+    for i in range(heroImage2.get_width()):
+        for j in range(heroImage2.get_height()):
+            if heroImage2.get_at((i,j)) == (0,0,0):
+                heroImage2.set_at((i,j), (255,0,0))
+    heroesImageButton = ImageButton(res(120), res(80), heroImage1, heroImage2)
     artifactsButton = TextButton(res(1280), res(250), 'Artifacts', 'PixelSplitter-Bold.ttf', res(50), (0,0,0), (255,0,0))
     skillsButton = TextButton(res(25), res(650), 'Abilities', 'PixelSplitter-Bold.ttf', res(50), (0,0,0), (255,0,0))
     prestigeButton = TextButton(res(1295), res(650), 'Prestige', 'PixelSplitter-Bold.ttf', res(50), (0,0,0), (255,0,0))
+    heroMenuImageIndex = r.randint(0, 4)
     # Titans
     titan1 = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
     titan1.health = TITAN_HEALTH
     titans = [titan1]
     currentTitan = titans[r.randint(0,len(titans)-1)]
     # Heroes Objects
-    pewdiepieHero = Hero('PewDiePie', 1, HERO_LEVELS[0], res(425), res(380), resImage(getImage('Images/pewdiepie.png')), resImage(getImage('Images/pewdiepie_attack.png')), 'left')
-    mrbeastHero = Hero('Mr. Beast', 2, HERO_LEVELS[1], res(1130), res(280), resImage(getImage('Images/mrbeast.png')), resImage(getImage('Images/mrbeast_attack.png')), 'right')
-    marziaHero = Hero('Marzia', 3, HERO_LEVELS[2], res(470), res(600), resImage(getImage('Images/marzia.png')), resImage(getImage('Images/marzia_attack.png')), 'left')
-    jackHero = Hero('Jack Septic Eye', 4, HERO_LEVELS[3], res(1150), res(500), resImage(getImage('Images/jack.png')), resImage(getImage('Images/jack_attack.png')), 'right')
-    markiplierHero = Hero('Markiplier', 5, HERO_LEVELS[4], res(400), res(500), resImage(getImage('Images/markiplier.png')), resImage(getImage('Images/markiplier_attack.png')), 'left')
+    pewdiepieHero = Hero('PewDiePie', 1, HERO_LEVELS[0], res(425), res(380), resImage(getImage('Images/pewdiepie.png')), resImage(getImage('Images/pewdiepie_attack.png')), resImage(getImage('Images/pewdiepie_locked.png')), 'left')
+    mrbeastHero = Hero('Mr. Beast', 2, HERO_LEVELS[1], res(1130), res(280), resImage(getImage('Images/mrbeast.png')), resImage(getImage('Images/mrbeast_attack.png')), resImage(getImage('Images/mrbeast_locked.png')), 'right')
+    marziaHero = Hero('Marzia', 3, HERO_LEVELS[2], res(470), res(600), resImage(getImage('Images/marzia.png')), resImage(getImage('Images/marzia_attack.png')), resImage(getImage('Images/marzia_locked.png')), 'left')
+    jackHero = Hero('Jack Septic Eye', 4, HERO_LEVELS[3], res(1150), res(500), resImage(getImage('Images/jack.png')), resImage(getImage('Images/jack_attack.png')), resImage(getImage('Images/jack_locked.png')), 'right')
+    markiplierHero = Hero('Markiplier', 5, HERO_LEVELS[4], res(400), res(500), resImage(getImage('Images/markiplier.png')), resImage(getImage('Images/markiplier_attack.png')), resImage(getImage('Images/markiplier_locked.png')), 'left')
     heroes = [pewdiepieHero, mrbeastHero, marziaHero, jackHero, markiplierHero]
     unlockButton = TextButton(res(700), res(700), 'Unlock', 'PixelSplitter-Bold.ttf', res(50), (0,0,0), (255,0,0))
     upgrade1Button = TextButton(res(275), res(700), 'Upgrade 1', 'PixelSplitter-Bold.ttf', res(50), (0,0,0), (255,0,0))
@@ -309,6 +321,7 @@ def main():
         # Pre-Event Code
         screen.fill((255,255,255))
         # Menu Buttons
+        heroesImageButton.draw(screen)
         heroesButton.draw(screen)
         artifactsButton.draw(screen)
         skillsButton.draw(screen)
@@ -319,30 +332,59 @@ def main():
         drawText(screen, 'Stage', res(50), res(715), res(24), (0,0,0))
         stageText = getText(str(STAGE), res(40), (0,0,0))
         screen.blit(stageText, (res(800)-stageText.get_width()//2, res(80)))
+        # Money
+        moneyImage = resImage(getImage('Images/money.png', 50, 50))
+        moneyText = getText(prettyNum(MONEY), res(50), (0,0,0))
+        moneySurface = p.Surface((moneyImage.get_width()+moneyText.get_width()+20, moneyText.get_height()+10), p.SRCALPHA)
+        moneySurface.blit(moneyImage, (0,(moneyText.get_height()-moneyImage.get_height())//2))
+        moneySurface.blit(moneyText, (moneyImage.get_width()+20, 0))
+        screen.blit(moneySurface, (res(1600) - moneySurface.get_width() - res(50), res(800)))
         # Titans
         currentTitan.draw(screen)
         currentTitan.update(1000)
-        if currentTitan.update(1000) > 0:
+        # Heroes
+        heroUnlocked = False
+        totalDPS = 0
+        for hero in heroes:
+            if hero.level > 0:
+                heroUnlocked = True
+                totalDPS += hero.getDPS(hero.level)
+                hero.draw(screen)
+                hero.update(500)   
+        # Hero Attack Jittering
+        if currentTitan.update(1000) > 0 and heroUnlocked:
             attackTime = currentTitan.update(1000)
+        # Health Bar
         if currentTitan.alive:
             p.draw.rect(screen, (255,0,0), p.Rect(res(500), currentTitan.y//2+res(50), int(res(600)*(currentTitan.health/currentTitan.getHealth())), res(30)))
             drawText(screen, prettyNum(currentTitan.health), res(20), res(510), currentTitan.y//2+res(54), (255,255,255))
+        # Titan Deaths
         if not currentTitan.toDraw:
             if TITAN_INDEX < 10:
                 TITAN_INDEX += 1
                 currentTitan = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+            elif TITAN_INDEX == 10 and STAGE%10 == 0:
+                TITAN_INDEX = 11
+                currentTitan = Titan(STAGE, 3, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+            elif TITAN_INDEX == 10:
+                TITAN_INDEX = 11
+                currentTitan = Titan(STAGE, 2, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
             else:
                 TITAN_INDEX = 1
                 STAGE += 1
-                currentTitan = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                currentTitan = titans[r.randint(0,len(titans)-1)]
+        # More UI elements
         tseriesIcon = resImage(getImage('Images/tseries_icon.png'))
         screen.blit(tseriesIcon, (res(1200)-stageText.get_width()//2, res(25)))
-        titanNumText = getText(str(11-TITAN_INDEX), res(40), (0,0,0))
+        if TITAN_INDEX <= 10:
+            titanNumText = getText(str(11-TITAN_INDEX), res(40), (0,0,0))
+        else:
+            titanNumText = getText('Boss', res(40), (0,0,0))
         screen.blit(titanNumText, (res(1150)-titanNumText.get_width(), res(20)))
-        # Heroes
-        for hero in heroes:
-            hero.draw(screen)
-            hero.update(500)
+        if time.perf_counter()-lastTime >= 1:
+            currentTitan.takeDamage(totalDPS)
+            lastTime = time.perf_counter()
+        # Help
         if HELP:
             pass
         # Events
@@ -351,10 +393,12 @@ def main():
             if event.type == p.QUIT:
                 gameState = 'quit'
             if event.type == p.MOUSEMOTION:
-                if heroesButton.check(p.mouse.get_pos()):
+                if heroesButton.check(p.mouse.get_pos()) or heroesImageButton.check(p.mouse.get_pos()):
                     heroesButton.toggleOn()
+                    heroesImageButton.toggleOn()
                 else:
                     heroesButton.toggleOff()
+                    heroesImageButton.toggleOff()
                 if artifactsButton.check(p.mouse.get_pos()):
                     artifactsButton.toggleOn()
                 else:
@@ -368,7 +412,7 @@ def main():
                 else:
                     prestigeButton.toggleOff()
             if event.type == p.MOUSEBUTTONUP:
-                if heroesButton.check(p.mouse.get_pos()):
+                if heroesButton.check(p.mouse.get_pos()) or heroesImageButton.check(p.mouse.get_pos()):
                     click.play()
                     gameState = 'heroes'
                     main()
@@ -386,6 +430,7 @@ def main():
                     main()
             if event.type == p.KEYUP:
                 if event.key == p.K_ESCAPE:
+                    click.play()
                     gameState = 'pausemenu'
                     main()
                 if event.key == p.K_SPACE:
@@ -460,8 +505,12 @@ def main():
         currentHeroSub = getText('LEVEL ' + str(currentHero.level) + '    DPS ' + prettyNum(currentHero.getDPS(currentHero.level)), res(50), (0,0,0))
         if currentHero.level > 0:
             screen.blit(currentHeroSub, (res(800)-currentHeroSub.get_width()//2, res(150)))
-        screen.blit(getText(currentHero.name, 75, (0,0,0)), (res(800) - getText(currentHero.name, 75, (0,0,0)).get_width()//2, res(50)))
-        screen.blit(p.transform.scale(currentHero.image, (currentHero.image.get_width()*4, currentHero.image.get_height()*4)), (res(800)-(currentHero.image.get_width()*2),(res(450)-(currentHero.image.get_height()*2))))
+        if currentHero.level > 0:
+            screen.blit(getText(currentHero.name, 75, (0,0,0)), (res(800) - getText(currentHero.name, 75, (0,0,0)).get_width()//2, res(50)))
+            screen.blit(p.transform.scale(currentHero.image, (currentHero.image.get_width()*4, currentHero.image.get_height()*4)), (res(800)-(currentHero.image.get_width()*2),(res(450)-(currentHero.image.get_height()*2))))
+        else:
+            screen.blit(getText('??????', 75, (0,0,0)), (res(800) - getText('??????', 75, (0,0,0)).get_width()//2-res(10), res(100)))
+            screen.blit(p.transform.scale(currentHero.lockedImage, (currentHero.lockedImage.get_width()*4, currentHero.lockedImage.get_height()*4)), (res(800)-(currentHero.lockedImage.get_width()*2),(res(450)-(currentHero.lockedImage.get_height()*2))))
         # Other UI Images
         moneyImage = resImage(getImage('Images/money.png'))
         moneyText = getText(prettyNum(MONEY), res(70), (0,0,0))

@@ -133,7 +133,7 @@ class GameData:
 
 class Hero:
     
-    def __init__(self, name, tier, level, x, y, idleImage, attackImage, location):
+    def __init__(self, name, tier, level, x, y, idleImage, attackImage, lockedImage, location):
         
         self.name = name
         self.tier = tier
@@ -146,6 +146,7 @@ class Hero:
         self.animationImage2 = attackImage
         self.image = idleImage
         self.loc = location
+        self.lockedImage = lockedImage
         
         self.upgradeCost = int(math.pow(25, self.tier-1)*math.pow(2, math.pow(self.level, 0.3))*(self.level+1))
         self.dps = int(5*math.pow(20+self.tier, self.tier+0.5*(self.level//1000)-1)*math.pow(2, math.pow(self.level, 0.3))*(self.level))
@@ -195,6 +196,7 @@ class Titan:
         self.toDraw = True
         self.alpha = 255
         self.health = int(math.pow(self.tier, 2)*(math.pow(1.5, math.sqrt(self.level))+8*self.level + math.pow(self.level, 2)))
+        self.value = int(math.pow(5, self.tier-1)*math.pow(2, math.pow(self.level, 0.3))*(self.level))
         
     def draw(self, screen):
         if self.toDraw:
@@ -249,6 +251,9 @@ class Titan:
     
     def getHealth(self):
         return int(math.pow(self.tier, 2)*(math.pow(1.5, math.sqrt(self.level))+8*self.level + math.pow(self.level, 2)))
+    
+    def getValue(self):
+        return int(math.pow(5, self.tier-1)*math.pow(2, math.pow(self.level, 0.3))*(self.level))
 
 def blit_alpha(target, source, location, opacity):
         x = location[0]
