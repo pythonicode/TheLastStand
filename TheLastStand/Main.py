@@ -33,7 +33,7 @@ def setup():
     STAGE = data[7]
     HERO_INDEX = data[8]
     HERO_LEVELS = []
-    TITAN_HEALTH = int((math.pow(1.5, math.sqrt(STAGE))+8*STAGE + math.pow(STAGE, 2)))
+    TITAN_HEALTH = int((math.pow(2, math.pow(STAGE,.35))*STAGE+math.pow(STAGE,2)+7)*STAGE)
     TITAN_INDEX = 1
     for i in range(20):
         HERO_LEVELS.append(data[i+9])
@@ -338,7 +338,7 @@ def main():
         moneySurface = p.Surface((moneyImage.get_width()+moneyText.get_width()+20, moneyText.get_height()+10), p.SRCALPHA)
         moneySurface.blit(moneyImage, (0,(moneyText.get_height()-moneyImage.get_height())//2))
         moneySurface.blit(moneyText, (moneyImage.get_width()+20, 0))
-        screen.blit(moneySurface, (res(1600) - moneySurface.get_width() - res(50), res(800)))
+        screen.blit(moneySurface, (res(1400) - moneySurface.get_width()//2+res(25), res(800)))
         # Titans
         currentTitan.draw(screen)
         currentTitan.update(1000)
@@ -348,7 +348,7 @@ def main():
         for hero in heroes:
             if hero.level > 0:
                 heroUnlocked = True
-                totalDPS += hero.getDPS(hero.level)
+                totalDPS += hero.getDPS()
                 hero.draw(screen)
                 hero.update(500)   
         # Hero Attack Jittering
@@ -356,23 +356,31 @@ def main():
             attackTime = currentTitan.update(1000)
         # Health Bar
         if currentTitan.alive:
-            p.draw.rect(screen, (255,0,0), p.Rect(res(500), currentTitan.y//2+res(50), int(res(600)*(currentTitan.health/currentTitan.getHealth())), res(30)))
+            p.draw.rect(screen, (255,0,0), p.Rect(res(500), currentTitan.y//2+res(50), int(res(600)*(TITAN_HEALTH/currentTitan.getHealth())), res(30)))
             drawText(screen, prettyNum(currentTitan.health), res(20), res(510), currentTitan.y//2+res(54), (255,255,255))
         # Titan Deaths
         if not currentTitan.toDraw:
             if TITAN_INDEX < 10:
                 TITAN_INDEX += 1
+                MONEY += currentTitan.getValue()
                 currentTitan = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                TITAN_HEALTH = currentTitan.health
             elif TITAN_INDEX == 10 and STAGE%10 == 0:
                 TITAN_INDEX = 11
+                MONEY += currentTitan.getValue()
                 currentTitan = Titan(STAGE, 3, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                TITAN_HEALTH = currentTitan.health
             elif TITAN_INDEX == 10:
                 TITAN_INDEX = 11
+                MONEY += currentTitan.getValue()
                 currentTitan = Titan(STAGE, 2, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                TITAN_HEALTH = currentTitan.health
             else:
                 TITAN_INDEX = 1
                 STAGE += 1
-                currentTitan = titans[r.randint(0,len(titans)-1)]
+                MONEY += currentTitan.getValue()
+                currentTitan = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                TITAN_HEALTH = currentTitan.health
         # More UI elements
         tseriesIcon = resImage(getImage('Images/tseries_icon.png'))
         screen.blit(tseriesIcon, (res(1200)-stageText.get_width()//2, res(25)))
@@ -383,6 +391,7 @@ def main():
         screen.blit(titanNumText, (res(1150)-titanNumText.get_width(), res(20)))
         if time.perf_counter()-lastTime >= 1:
             currentTitan.takeDamage(totalDPS)
+            TITAN_HEALTH = currentTitan.health
             lastTime = time.perf_counter()
         # Help
         if HELP:
@@ -502,7 +511,7 @@ def main():
             pass
         # Heroes
         currentHero = heroes[HERO_INDEX]
-        currentHeroSub = getText('LEVEL ' + str(currentHero.level) + '    DPS ' + prettyNum(currentHero.getDPS(currentHero.level)), res(50), (0,0,0))
+        currentHeroSub = getText('LEVEL ' + str(currentHero.level) + '    DPS ' + prettyNum(currentHero.getDPS()), res(50), (0,0,0))
         if currentHero.level > 0:
             screen.blit(currentHeroSub, (res(800)-currentHeroSub.get_width()//2, res(150)))
         if currentHero.level > 0:

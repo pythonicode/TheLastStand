@@ -148,8 +148,8 @@ class Hero:
         self.loc = location
         self.lockedImage = lockedImage
         
-        self.upgradeCost = int(math.pow(25, self.tier-1)*math.pow(2, math.pow(self.level, 0.3))*(self.level+1))
-        self.dps = int(5*math.pow(20+self.tier, self.tier+0.5*(self.level//1000)-1)*math.pow(2, math.pow(self.level, 0.3))*(self.level))
+        self.upgradeCost = int(math.pow(25, self.tier-1)*math.pow(2,math.pow(self.level+1,0.5))*(self.level+2))
+        self.dps = int(math.pow(25, (self.tier+0.5*(self.level//1000)-1))*math.pow(2,math.pow(self.level,0.3))*math.pow(self.level,math.pow(self.tier,0.1)))
         
     def draw(self, screen):
         screen.blit(self.image, (self.x, self.y))
@@ -166,7 +166,7 @@ class Hero:
             self.y = self.yInit
     
     def getUpgradeCost(self, lv):
-        return int(math.pow(25, self.tier-1)*math.pow(2, math.pow(lv, 0.35))*(lv+1))
+        return int(math.pow(25, self.tier-1)*math.pow(2,math.pow(lv+1,0.5))*(lv+2))
     
     def getTotalUpgradeCost(self, amount):
         totalUpgradeCost = 0
@@ -174,8 +174,8 @@ class Hero:
             totalUpgradeCost += self.getUpgradeCost(self.level+i)
         return totalUpgradeCost
     
-    def getDPS(self, lv):
-        return int(5*math.pow(20+self.tier, self.tier+0.5*(lv//1000)-1)*math.pow(2, math.pow(lv, 0.3))*(lv))
+    def getDPS(self):
+        return int(math.pow(25, (self.tier+0.5*(self.level//1000)-1))*math.pow(2,math.pow(self.level,0.3))*math.pow(self.level,math.pow(self.tier,0.1)))
             
 class Titan:
     
@@ -195,8 +195,8 @@ class Titan:
         self.alive = True
         self.toDraw = True
         self.alpha = 255
-        self.health = int(math.pow(self.tier, 2)*(math.pow(1.5, math.sqrt(self.level))+8*self.level + math.pow(self.level, 2)))
-        self.value = int(math.pow(5, self.tier-1)*math.pow(2, math.pow(self.level, 0.3))*(self.level))
+        self.health = int((math.pow(self.tier, 2)*math.pow(2, math.pow(self.level,.35))*self.level+math.pow(self.level,2)+7)*self.level)
+        self.value = int(self.tier*math.pow(5, self.tier-1)*math.pow(2, math.pow(self.level, 0.3))*(self.level/2)+(self.level-2))
         
     def draw(self, screen):
         if self.toDraw:
@@ -250,10 +250,10 @@ class Titan:
         return False
     
     def getHealth(self):
-        return int(math.pow(self.tier, 2)*(math.pow(1.5, math.sqrt(self.level))+8*self.level + math.pow(self.level, 2)))
+        return int((math.pow(self.tier, 2)*math.pow(2, math.pow(self.level,.35))*self.level+math.pow(self.level,2)+7)*self.level)
     
     def getValue(self):
-        return int(math.pow(5, self.tier-1)*math.pow(2, math.pow(self.level, 0.3))*(self.level))
+        return int(self.tier*math.pow(5, self.tier-1)*math.pow(2, math.pow(self.level, 0.3))*(self.level/2)+(self.level-1))
 
 def blit_alpha(target, source, location, opacity):
         x = location[0]
