@@ -214,10 +214,10 @@ class Titan:
                 return time.perf_counter()
         return 0
     
-    def checkAlive(self):
+    def checkAlive(self, FPS):
         if not self.alive:
             if self.alpha > 0:
-                self.alpha -= 10
+                self.alpha -= 10*(60//FPS)
             else:
                 self.toDraw = False
                 return True

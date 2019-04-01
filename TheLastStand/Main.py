@@ -96,7 +96,12 @@ def main():
     prestigeButton = TextButton(res(1295), res(650), 'Prestige', 'PixelSplitter-Bold.ttf', res(50), (0,0,0), (255,0,0))
     heroMenuImageIndex = r.randint(0, 4)
     # Titans
-    titan1 = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+    titanTier = 1
+    if TITAN_INDEX == 11:
+        titanTier += 1
+        if STAGE%10 == 0:
+            titanTier+=1
+    titan1 = Titan(STAGE, titanTier, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
     titan1.health = TITAN_HEALTH
     titans = [titan1]
     currentTitan = titans[r.randint(0,len(titans)-1)]
@@ -448,7 +453,7 @@ def main():
                         TITAN_HEALTH = currentTitan.health
                         attackTime = time.perf_counter()
         currentTitan.wobble(attackTime)
-        currentTitan.checkAlive()
+        currentTitan.checkAlive(FPS_SETTING)
         # Post-Event Code
         PREV_STATE = 'game'
         # Update the display
