@@ -148,8 +148,8 @@ class Hero:
         self.loc = location
         self.lockedImage = lockedImage
         
-        self.upgradeCost = int(math.pow(25, self.tier-1)*math.pow(2,math.pow(self.level+1,0.5))*(self.level+2))
-        self.dps = int(math.pow(25, (self.tier+0.5*(self.level//1000)-1))*math.pow(2,math.pow(self.level,0.3))*math.pow(self.level,math.pow(self.tier,0.1)))
+        self.upgradeCost = int(math.pow(50, self.tier-1)*math.pow(2,math.pow(self.level,0.5))*(self.level+1))
+        self.dps = int(math.pow(10, (self.tier+2*(self.level//1000)-1))*math.pow(2,math.pow(self.level,0.3))*math.pow(self.level,math.pow(self.tier,0.1)+0.3))
         
     def draw(self, screen):
         screen.blit(self.image, (self.x, self.y))
@@ -166,7 +166,7 @@ class Hero:
             self.y = self.yInit
     
     def getUpgradeCost(self, lv):
-        return int(math.pow(25, self.tier-1)*math.pow(2,math.pow(lv+1,0.5))*(lv+2))
+        return int(math.pow(50, self.tier-1)*math.pow(2,math.pow(lv,0.5))*(lv+1))
     
     def getTotalUpgradeCost(self, amount):
         totalUpgradeCost = 0
@@ -175,7 +175,7 @@ class Hero:
         return totalUpgradeCost
     
     def getDPS(self):
-        return int(math.pow(25, (self.tier+0.5*(self.level//1000)-1))*math.pow(2,math.pow(self.level,0.3))*math.pow(self.level,math.pow(self.tier,0.1)))
+        return int(math.pow(10, (self.tier+2*(self.level//1000)-1))*math.pow(2,math.pow(self.level,0.3))*math.pow(self.level,math.pow(self.tier,0.1)+0.3))
             
 class Titan:
     
