@@ -8,6 +8,7 @@ import pygame as p
 import time
 import math
 import threading
+import sys
 
 class TextButton:
     
@@ -255,6 +256,65 @@ class Titan:
     def getValue(self):
         return int(self.tier*math.pow(5, self.tier-1)*math.pow(2, math.pow(self.level, 0.3))*(self.level/2)+(self.level-1))
 
+class Artifact:
+    
+    def __init__(self, name, level, type, normalImage, hoverImage, lockedImage):
+        
+        self.name = name
+        self.level = level
+        self.type = type
+        self.normalImage = normalImage
+        self.hoverImage = hoverImage
+        self.lockedImage = lockedImage
+        self.image = normalImage
+        
+        self.maxLevel = sys.maxsize
+        self.damageMult = 50*self.level
+        self.effectMult = 1 + 0.1*self.level
+        self.upgradeCost = int(math.pow(self.level,2)*math.pow(1.2, self.level))
+        self.desc = ''
+        
+        self.isMaxed = (self.level >= self.maxLevel)
+        
+        if self.type == 'subs':
+            self.upgradeCost = int(math.pow(self.level,2)*math.pow(1.5, self.level))
+            self.desc = 'Subs Per Prestige'
+        if self.type == 'click':
+            self.desc = 'Click Damage'
+        if self.type == 'numbots':
+            self.maxLevel = 5
+            self.damageMult = 50*math.pow(self.level,2)
+            self.effectMult = 0.1*self.level
+            self.upgradeCost = int(math.pow(self.level,3)*math.pow(2, math.pow(self.level,2)))
+            self.desc = 'Bots Per Level'
+        if self.type == 'herochc':
+            self.effectMult = 1 - math.pow(1.1, -self.level)
+            self.desc = 'Hero Crit Chance'
+        if self.type == 'herochd':
+            self.desc = 'Hero Crit Damage'
+        if self.type == 'artifact':
+            self.desc = 'Artifact Damage'
+        if self.type == 'money':
+            self.desc = 'Monetization'
+        if self.type == 'splash':
+            self.maxLevel = 50
+            self.effectMult = 0.05*self.level
+            self.desc = 'Splash Damage'
+        if self.type == 'hero':
+            self.desc = 'Hero Damage'
+
+        
+    def draw(self, screen, x, y):
+        screen.blit(self.image, (x,y))
+        
+    def check(self, pos):
+        mouseX = pos[0]
+        mouseY = pos[1]
+        if mouseX > self.x and mouseX < (self.x+self.image.get_width()) and mouseY > self.y and mouseY < (self.y+self.image.get_height()):
+            return True
+        return False
+
+        
 def blit_alpha(target, source, location, opacity):
         x = location[0]
         y = location[1]
