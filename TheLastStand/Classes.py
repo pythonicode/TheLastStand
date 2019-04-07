@@ -223,13 +223,13 @@ class Titan:
                 self.toDraw = False
                 return True
         
-    def wobble(self, currentTime):
+    def wobble(self, currentTime, mult):
         if self.alive:
             if time.perf_counter()-currentTime <= 0.025:
-                self.x = self.xInit - 5
+                self.x = self.xInit - mult
                 return False
             elif time.perf_counter()-currentTime <= 0.05:
-                self.x = self.xInit + 5
+                self.x = self.xInit + mult
                 return False
             else:
                 self.x = self.xInit
@@ -271,7 +271,7 @@ class Artifact:
         self.maxLevel = sys.maxsize
         self.damageMult = 50*self.level
         self.effectMult = 10*self.level
-        self.upgradeCost = int(math.pow(self.level,2)*math.pow(1.2, self.level))
+        self.upgradeCost = int(math.pow(self.level,2)*math.pow(1.1, math.pow(self.level,.5)))
         self.desc = ''
         
         self.isMaxed = (self.level >= self.maxLevel)
@@ -280,18 +280,19 @@ class Artifact:
             self.upgradeCost = int(math.pow(self.level,2)*math.pow(1.5, self.level))
             self.desc = 'Subscribers'
         if self.artifactType == 'click':
+            self.effectMult = int(math.pow(self.effectMult, 1.2))
             self.desc = 'Click Damage'
         if self.artifactType == 'numbots':
             self.maxLevel = 5
-            self.damageMult = 50*math.pow(self.level,2)
-            self.effectMult = 100 - 10*self.level
+            self.damageMult = int(50*math.pow(self.level,2))
+            self.effectMult = int(100 - 10*self.level)
             cost = '399'
             for i in range(self.level):
                 cost += '9'
             self.upgradeCost = int(cost)
             self.desc = 'Bots Per Level'
         if self.artifactType == 'herochc':
-            self.effectMult = 1 - math.pow(1.1, -self.level)
+            self.effectMult = int((1 - math.pow(1.1, -self.level))*100)
             self.desc = 'Hero Crit Chance'
         if self.artifactType == 'herochd':
             self.desc = 'Hero Crit Damage'
@@ -301,7 +302,7 @@ class Artifact:
             self.desc = 'Monetization'
         if self.artifactType == 'splash':
             self.maxLevel = 50
-            self.effectMult = 5*self.level
+            self.effectMult = 2*self.level
             self.desc = 'Splash Damage'
         if self.artifactType == 'hero':
             self.desc = 'Hero Damage'
