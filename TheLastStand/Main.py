@@ -41,7 +41,7 @@ def setup():
         tier += 1
         if STAGE%10 == 0:
             tier += 1
-    TITAN_HEALTH = int((math.pow(tier, 2)*math.pow(2, math.pow(STAGE,.35))*STAGE+math.pow(STAGE,2)+7)*STAGE)
+    TITAN_HEALTH = int((math.pow(tier, 2)*math.pow(1.1, STAGE/10)*STAGE+math.pow(STAGE,2)+7)*STAGE)
     ARTIFACT_LEVELS = []
     for i in range(30):
         ARTIFACT_LEVELS.append(data[i+30])
@@ -131,6 +131,12 @@ def main():
     for artifact in artifacts:
         totalArtifactDamageMult += artifact.getDamageMult(artifact.level)/100
     unlockArtifactButton = TextButton(res(510), res(600), 'Unlock New Artifact', 'PixelSplitter-Bold.ttf', res(50), (0,0,0), (255,0,0))
+    # Prestige
+    prestigeButtonImage1 = resImage(getImage('Images/prestige_icon.png'))
+    prestigeButtonImage1 = p.transform.scale(prestigeButtonImage1, (int(prestigeButtonImage1.get_width()*4), int(prestigeButtonImage1.get_height()*4)))
+    prestigeButtonImage2 = resImage(getImage('Images/prestige_icon_hover.png'))
+    prestigeButtonImage2 = p.transform.scale(prestigeButtonImage2, (int(prestigeButtonImage2.get_width()*4), int(prestigeButtonImage2.get_height()*4)))
+    getSubsButton = ImageButton(res(300), res(100), prestigeButtonImage1, prestigeButtonImage2)
     # Game Heroes Buttons
     heroMenuImageIndex = r.randint(0, len(heroes)-1)
     heroImage1 = heroes[heroMenuImageIndex].lockedImage
@@ -153,6 +159,12 @@ def main():
             if artifactImage2.get_at((i,j)) == (0,0,0):
                 artifactImage2.set_at((i,j), (255,0,0))
     artifactsImageButton = ImageButton(res(1330), res(75), artifactImage1, artifactImage2)
+    # Game Prestige Button
+    prestigeButtonImage1 = resImage(getImage('Images/prestige_icon.png'))
+    prestigeButtonImage1 = p.transform.scale(prestigeButtonImage1, (int(prestigeButtonImage1.get_width()*1.5), int(prestigeButtonImage1.get_height()*1.5)))
+    prestigeButtonImage2 = resImage(getImage('Images/prestige_icon_hover.png'))
+    prestigeButtonImage2 = p.transform.scale(prestigeButtonImage2, (int(prestigeButtonImage2.get_width()*1.5), int(prestigeButtonImage2.get_height()*1.5)))
+    prestigeImageButton = ImageButton(res(1350), res(480), prestigeButtonImage1, prestigeButtonImage2)
     # Pause Menu
     mainMenuButton = TextButton(res(680), res(300), 'Main Menu', 'PixelSplitter-Bold.ttf', res(40), (255,255,255), (255,0,0))
     settingsButton2 = TextButton(res(694), res(400), 'Settings', 'PixelSplitter-Bold.ttf', res(40), (255,255,255), (255,0,0))
@@ -267,6 +279,56 @@ def main():
         p.draw.rect(screen, (255,0,0), p.Rect(res(200)+220, res(605), int((res(1170)-(res(200)+200))*VOLUME/100), 30))
         # Back
         backButton.draw(screen)
+        '''
+        THE BELOW IS FOR UPDATING TITANS WHILE OUTSIDE THE 'GAME' STATE
+        '''
+        # Titan Deaths
+        MAX_INDEX = int(10*(getEffectMult(chair_artifact)-1))
+        if not currentTitan.toDraw:
+            if TITAN_INDEX < MAX_INDEX:
+                ADD_INDEX = (1 + splashDamage//currentTitan.getHealth())
+                if ADD_INDEX > MAX_INDEX-TITAN_INDEX:
+                    ADD_INDEX = MAX_INDEX-TITAN_INDEX
+                TITAN_INDEX += ADD_INDEX
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact)*ADD_INDEX)
+                if TITAN_INDEX < MAX_INDEX:
+                    currentTitan = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                    currentTitan.takeDamage(splashDamage-(splashDamage//currentTitan.getHealth())*currentTitan.getHealth())
+                    TITAN_HEALTH = currentTitan.health
+            elif TITAN_INDEX == MAX_INDEX and STAGE%10 == 0:
+                TITAN_INDEX = 11
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact))
+                currentTitan = Titan(STAGE, 3, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                TITAN_HEALTH = currentTitan.health
+            elif TITAN_INDEX == MAX_INDEX:
+                TITAN_INDEX = 11
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact))
+                currentTitan = Titan(STAGE, 2, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                TITAN_HEALTH = currentTitan.health
+            else:
+                TITAN_INDEX = 1
+                STAGE += 1
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact))
+                currentTitan = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                TITAN_HEALTH = currentTitan.health
+        # Hero DPS
+        totalDPS = 0
+        for hero in heroes:
+            if hero.level > 0:
+                totalDPS += hero.getDPS()
+        totalDPS = int(totalDPS*getTotalArtifactDamageMult(artifacts)*getEffectMult(tv_artifact))
+        if time.perf_counter()-lastTime >= 1:
+            if r.randint(0, 100) <= (getEffectMult(maya_artifact)-1)*100:
+                totalDPS = int(totalDPS * getEffectMult(edgar_artifact))
+            currentTitan.takeDamage(totalDPS)
+            if currentTitan.health <= 0:
+                splashDamage = -int(currentTitan.health*getEffectMult(slippy_artifact))
+            TITAN_HEALTH = currentTitan.health
+            lastTime = time.perf_counter()
+        currentTitan.checkAlive(FPS_SETTING)
+        '''
+        END
+        '''
         # Events
         for event in p.event.get():
             # Quit Event
@@ -368,6 +430,7 @@ def main():
         artifactsImageButton.draw(screen)
         artifactsButton.draw(screen)
         skillsButton.draw(screen)
+        prestigeImageButton.draw(screen)
         prestigeButton.draw(screen)
         # Game Screen
         p.draw.rect(screen, (0,0,0), p.Rect(res(340), 0, res(920), res(920)))
@@ -416,11 +479,15 @@ def main():
         MAX_INDEX = int(10*(getEffectMult(chair_artifact)-1))
         if not currentTitan.toDraw:
             if TITAN_INDEX < MAX_INDEX:
-                TITAN_INDEX += (1 + (Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))).health//splashDamage)
-                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact))
-                currentTitan = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
-                currentTitan.takeDamage(splashDamage-(Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))).health*splashDamage)
-                TITAN_HEALTH = currentTitan.health
+                ADD_INDEX = (1 + splashDamage//currentTitan.getHealth())
+                if ADD_INDEX > MAX_INDEX-TITAN_INDEX:
+                    ADD_INDEX = MAX_INDEX-TITAN_INDEX
+                TITAN_INDEX += ADD_INDEX
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact)*ADD_INDEX)
+                if TITAN_INDEX < MAX_INDEX:
+                    currentTitan = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                    currentTitan.takeDamage(splashDamage-(splashDamage//currentTitan.getHealth())*currentTitan.getHealth())
+                    TITAN_HEALTH = currentTitan.health
             elif TITAN_INDEX == MAX_INDEX and STAGE%10 == 0:
                 TITAN_INDEX = 11
                 MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact))
@@ -439,17 +506,18 @@ def main():
                 TITAN_HEALTH = currentTitan.health
         # More UI elements
         tseriesIcon = resImage(getImage('Images/tseries_icon.png'))
-        screen.blit(tseriesIcon, (res(1200)-stageText.get_width()//2, res(25)))
+        screen.blit(tseriesIcon, (res(1200)-tseriesIcon.get_width()//2, res(25)))
         if TITAN_INDEX <= MAX_INDEX:
             titanNumText = getText(str(int(MAX_INDEX+1-TITAN_INDEX)), res(40), (0,0,0))
         else:
             titanNumText = getText('Boss', res(40), (0,0,0))
-        screen.blit(titanNumText, (res(1150)-titanNumText.get_width(), res(20)))
+        screen.blit(titanNumText, (res(1170)-titanNumText.get_width(), res(20)))
         if time.perf_counter()-lastTime >= 1:
             if r.randint(0, 100) <= (getEffectMult(maya_artifact)-1)*100:
                 totalDPS = int(totalDPS * getEffectMult(edgar_artifact))
             currentTitan.takeDamage(totalDPS)
-            splashDamage = int((totalDPS - currentTitan.health)*(getEffectMult(slippy_artifact)-1))
+            if currentTitan.health <= 0:
+                splashDamage = -int(currentTitan.health*getEffectMult(slippy_artifact))
             TITAN_HEALTH = currentTitan.health
             lastTime = time.perf_counter()
         # Help
@@ -477,10 +545,12 @@ def main():
                     skillsButton.toggleOn()
                 else:
                     skillsButton.toggleOff()
-                if prestigeButton.check(p.mouse.get_pos()):
+                if prestigeButton.check(p.mouse.get_pos()) or prestigeImageButton.check(p.mouse.get_pos()):
                     prestigeButton.toggleOn()
+                    prestigeImageButton.toggleOn()
                 else:
                     prestigeButton.toggleOff()
+                    prestigeImageButton.toggleOff()
             if event.type == p.MOUSEBUTTONUP:
                 if heroesButton.check(p.mouse.get_pos()) or heroesImageButton.check(p.mouse.get_pos()):
                     click.play()
@@ -494,7 +564,7 @@ def main():
                     click.play()
                     gameState = 'skills'
                     main()
-                if prestigeButton.check(p.mouse.get_pos()):
+                if prestigeButton.check(p.mouse.get_pos()) or prestigeImageButton.check(p.mouse.get_pos()):
                     click.play()
                     gameState = 'prestige'
                     main()
@@ -506,6 +576,8 @@ def main():
                 if event.key == p.K_SPACE:
                     if currentTitan.alive:
                         currentTitan.takeDamage(int(STAGE*getTotalArtifactDamageMult(artifacts)*getEffectMult(camera_artifact)))
+                        if currentTitan.health <= 0:
+                            splashDamage = -int(currentTitan.health*getEffectMult(slippy_artifact))
                         TITAN_HEALTH = currentTitan.health
                         attackTime = time.perf_counter()
         currentTitan.wobble(attackTime, 5)
@@ -576,10 +648,10 @@ def main():
         if currentHero.level > 0:
             screen.blit(currentHeroSub, (res(800)-currentHeroSub.get_width()//2, res(150)))
         if currentHero.level > 0:
-            screen.blit(getText(currentHero.name, 75, (0,0,0)), (res(800) - getText(currentHero.name, 75, (0,0,0)).get_width()//2, res(50)))
+            screen.blit(getText(currentHero.name, res(70), (0,0,0)), (res(800) - getText(currentHero.name, res(70), (0,0,0)).get_width()//2, res(50)))
             screen.blit(p.transform.scale(currentHero.image, (currentHero.image.get_width()*4, currentHero.image.get_height()*4)), (res(800)-(currentHero.image.get_width()*2),(res(450)-(currentHero.image.get_height()*2))))
         else:
-            screen.blit(getText('??????', 75, (0,0,0)), (res(800) - getText('??????', 75, (0,0,0)).get_width()//2-res(10), res(100)))
+            screen.blit(getText('??????', res(70), (0,0,0)), (res(800) - getText('??????', res(70), (0,0,0)).get_width()//2-res(10), res(100)))
             screen.blit(p.transform.scale(currentHero.lockedImage, (currentHero.lockedImage.get_width()*4, currentHero.lockedImage.get_height()*4)), (res(800)-(currentHero.lockedImage.get_width()*2),(res(450)-(currentHero.lockedImage.get_height()*2))))
         # Other UI Images
         moneyImage = resImage(getImage('Images/money.png'))
@@ -625,6 +697,56 @@ def main():
             moneySurface.blit(moneyImage, (0,(moneyText.get_height()-moneyImage.get_height())//2))
             moneySurface.blit(moneyText, (moneyImage.get_width()+10, 0))
             screen.blit(moneySurface, (res(800) - moneySurface.get_width()//2, res(760)))
+        '''
+        THE BELOW IS FOR UPDATING TITANS WHILE OUTSIDE THE 'GAME' STATE
+        '''
+        # Titan Deaths
+        MAX_INDEX = int(10*(getEffectMult(chair_artifact)-1))
+        if not currentTitan.toDraw:
+            if TITAN_INDEX < MAX_INDEX:
+                ADD_INDEX = (1 + splashDamage//currentTitan.getHealth())
+                if ADD_INDEX > MAX_INDEX-TITAN_INDEX:
+                    ADD_INDEX = MAX_INDEX-TITAN_INDEX
+                TITAN_INDEX += ADD_INDEX
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact)*ADD_INDEX)
+                if TITAN_INDEX < MAX_INDEX:
+                    currentTitan = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                    currentTitan.takeDamage(splashDamage-(splashDamage//currentTitan.getHealth())*currentTitan.getHealth())
+                    TITAN_HEALTH = currentTitan.health
+            elif TITAN_INDEX == MAX_INDEX and STAGE%10 == 0:
+                TITAN_INDEX = 11
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact))
+                currentTitan = Titan(STAGE, 3, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                TITAN_HEALTH = currentTitan.health
+            elif TITAN_INDEX == MAX_INDEX:
+                TITAN_INDEX = 11
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact))
+                currentTitan = Titan(STAGE, 2, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                TITAN_HEALTH = currentTitan.health
+            else:
+                TITAN_INDEX = 1
+                STAGE += 1
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact))
+                currentTitan = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                TITAN_HEALTH = currentTitan.health
+        # Hero DPS
+        totalDPS = 0
+        for hero in heroes:
+            if hero.level > 0:
+                totalDPS += hero.getDPS()
+        totalDPS = int(totalDPS*getTotalArtifactDamageMult(artifacts)*getEffectMult(tv_artifact))
+        if time.perf_counter()-lastTime >= 1:
+            if r.randint(0, 100) <= (getEffectMult(maya_artifact)-1)*100:
+                totalDPS = int(totalDPS * getEffectMult(edgar_artifact))
+            currentTitan.takeDamage(totalDPS)
+            if currentTitan.health <= 0:
+                splashDamage = -int(currentTitan.health*getEffectMult(slippy_artifact))
+            TITAN_HEALTH = currentTitan.health
+            lastTime = time.perf_counter()
+        currentTitan.checkAlive(FPS_SETTING)
+        '''
+        END
+        '''
         # Events
         for event in p.event.get():
             # Quit Event
@@ -750,6 +872,56 @@ def main():
             drawText(screen, 'All Artifacts have been Unlocked', res(50), res(300), res(600), (0,0,0))
         # Buttons
         backButton.draw(screen)
+        '''
+        THE BELOW IS FOR UPDATING TITANS WHILE OUTSIDE THE 'GAME' STATE
+        '''
+        # Titan Deaths
+        MAX_INDEX = int(10*(getEffectMult(chair_artifact)-1))
+        if not currentTitan.toDraw:
+            if TITAN_INDEX < MAX_INDEX:
+                ADD_INDEX = (1 + splashDamage//currentTitan.getHealth())
+                if ADD_INDEX > MAX_INDEX-TITAN_INDEX:
+                    ADD_INDEX = MAX_INDEX-TITAN_INDEX
+                TITAN_INDEX += ADD_INDEX
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact)*ADD_INDEX)
+                if TITAN_INDEX < MAX_INDEX:
+                    currentTitan = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                    currentTitan.takeDamage(splashDamage-(splashDamage//currentTitan.getHealth())*currentTitan.getHealth())
+                    TITAN_HEALTH = currentTitan.health
+            elif TITAN_INDEX == MAX_INDEX and STAGE%10 == 0:
+                TITAN_INDEX = 11
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact))
+                currentTitan = Titan(STAGE, 3, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                TITAN_HEALTH = currentTitan.health
+            elif TITAN_INDEX == MAX_INDEX:
+                TITAN_INDEX = 11
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact))
+                currentTitan = Titan(STAGE, 2, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                TITAN_HEALTH = currentTitan.health
+            else:
+                TITAN_INDEX = 1
+                STAGE += 1
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact))
+                currentTitan = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                TITAN_HEALTH = currentTitan.health
+        # Hero DPS
+        totalDPS = 0
+        for hero in heroes:
+            if hero.level > 0:
+                totalDPS += hero.getDPS()
+        totalDPS = int(totalDPS*getTotalArtifactDamageMult(artifacts)*getEffectMult(tv_artifact))
+        if time.perf_counter()-lastTime >= 1:
+            if r.randint(0, 100) <= (getEffectMult(maya_artifact)-1)*100:
+                totalDPS = int(totalDPS * getEffectMult(edgar_artifact))
+            currentTitan.takeDamage(totalDPS)
+            if currentTitan.health <= 0:
+                splashDamage = -int(currentTitan.health*getEffectMult(slippy_artifact))
+            TITAN_HEALTH = currentTitan.health
+            lastTime = time.perf_counter()
+        currentTitan.checkAlive(FPS_SETTING)
+        '''
+        END
+        '''
         # Events
         for event in p.event.get():
             # Quit Event
@@ -819,6 +991,56 @@ def main():
         screen.fill((255,255,255))
         drawText(screen, 'Coming Soon!', res(100), res(440), res(200), (0,0,0))
         backButton.draw(screen)
+        '''
+        THE BELOW IS FOR UPDATING TITANS WHILE OUTSIDE THE 'GAME' STATE
+        '''
+        # Titan Deaths
+        MAX_INDEX = int(10*(getEffectMult(chair_artifact)-1))
+        if not currentTitan.toDraw:
+            if TITAN_INDEX < MAX_INDEX:
+                ADD_INDEX = (1 + splashDamage//currentTitan.getHealth())
+                if ADD_INDEX > MAX_INDEX-TITAN_INDEX:
+                    ADD_INDEX = MAX_INDEX-TITAN_INDEX
+                TITAN_INDEX += ADD_INDEX
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact)*ADD_INDEX)
+                if TITAN_INDEX < MAX_INDEX:
+                    currentTitan = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                    currentTitan.takeDamage(splashDamage-(splashDamage//currentTitan.getHealth())*currentTitan.getHealth())
+                    TITAN_HEALTH = currentTitan.health
+            elif TITAN_INDEX == MAX_INDEX and STAGE%10 == 0:
+                TITAN_INDEX = 11
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact))
+                currentTitan = Titan(STAGE, 3, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                TITAN_HEALTH = currentTitan.health
+            elif TITAN_INDEX == MAX_INDEX:
+                TITAN_INDEX = 11
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact))
+                currentTitan = Titan(STAGE, 2, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                TITAN_HEALTH = currentTitan.health
+            else:
+                TITAN_INDEX = 1
+                STAGE += 1
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact))
+                currentTitan = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                TITAN_HEALTH = currentTitan.health
+        # Hero DPS
+        totalDPS = 0
+        for hero in heroes:
+            if hero.level > 0:
+                totalDPS += hero.getDPS()
+        totalDPS = int(totalDPS*getTotalArtifactDamageMult(artifacts)*getEffectMult(tv_artifact))
+        if time.perf_counter()-lastTime >= 1:
+            if r.randint(0, 100) <= (getEffectMult(maya_artifact)-1)*100:
+                totalDPS = int(totalDPS * getEffectMult(edgar_artifact))
+            currentTitan.takeDamage(totalDPS)
+            if currentTitan.health <= 0:
+                splashDamage = -int(currentTitan.health*getEffectMult(slippy_artifact))
+            TITAN_HEALTH = currentTitan.health
+            lastTime = time.perf_counter()
+        currentTitan.checkAlive(FPS_SETTING)
+        '''
+        END
+        '''
         # Events
         for event in p.event.get():
             # Quit Event
@@ -848,6 +1070,59 @@ def main():
         # Pre-Event Code
         screen.fill((255,255,255))
         backButton.draw(screen)
+        if STAGE < 50:
+            drawText(screen, 'Come Back After you reach', res(50), res(400), res(200), (0,0,0))
+            drawText(screen, 'STAGE 50', res(100), res(520), res(300), (0,0,0))
+        '''
+        THE BELOW IS FOR UPDATING TITANS WHILE OUTSIDE THE 'GAME' STATE
+        '''
+        # Titan Deaths
+        MAX_INDEX = int(10*(getEffectMult(chair_artifact)-1))
+        if not currentTitan.toDraw:
+            if TITAN_INDEX < MAX_INDEX:
+                ADD_INDEX = (1 + splashDamage//currentTitan.getHealth())
+                if ADD_INDEX > MAX_INDEX-TITAN_INDEX:
+                    ADD_INDEX = MAX_INDEX-TITAN_INDEX
+                TITAN_INDEX += ADD_INDEX
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact)*ADD_INDEX)
+                if TITAN_INDEX < MAX_INDEX:
+                    currentTitan = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                    currentTitan.takeDamage(splashDamage-(splashDamage//currentTitan.getHealth())*currentTitan.getHealth())
+                    TITAN_HEALTH = currentTitan.health
+            elif TITAN_INDEX == MAX_INDEX and STAGE%10 == 0:
+                TITAN_INDEX = 11
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact))
+                currentTitan = Titan(STAGE, 3, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                TITAN_HEALTH = currentTitan.health
+            elif TITAN_INDEX == MAX_INDEX:
+                TITAN_INDEX = 11
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact))
+                currentTitan = Titan(STAGE, 2, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                TITAN_HEALTH = currentTitan.health
+            else:
+                TITAN_INDEX = 1
+                STAGE += 1
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact))
+                currentTitan = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                TITAN_HEALTH = currentTitan.health
+        # Hero DPS
+        totalDPS = 0
+        for hero in heroes:
+            if hero.level > 0:
+                totalDPS += hero.getDPS()
+        totalDPS = int(totalDPS*getTotalArtifactDamageMult(artifacts)*getEffectMult(tv_artifact))
+        if time.perf_counter()-lastTime >= 1:
+            if r.randint(0, 100) <= (getEffectMult(maya_artifact)-1)*100:
+                totalDPS = int(totalDPS * getEffectMult(edgar_artifact))
+            currentTitan.takeDamage(totalDPS)
+            if currentTitan.health <= 0:
+                splashDamage = -int(currentTitan.health*getEffectMult(slippy_artifact))
+            TITAN_HEALTH = currentTitan.health
+            lastTime = time.perf_counter()
+        currentTitan.checkAlive(FPS_SETTING)
+        '''
+        END
+        '''
         # Events
         for event in p.event.get():
             # Quit Event
@@ -918,6 +1193,56 @@ def main():
         subSurface.blit(subImage, (0,(subText.get_height()-subImage.get_height())//2))
         subSurface.blit(subText, (subImage.get_width()+10, 0))
         screen.blit(subSurface, (res(800) - subSurface.get_width()//2 + res(400), res(760)))
+        '''
+        THE BELOW IS FOR UPDATING TITANS WHILE OUTSIDE THE 'GAME' STATE
+        '''
+        # Titan Deaths
+        MAX_INDEX = int(10*(getEffectMult(chair_artifact)-1))
+        if not currentTitan.toDraw:
+            if TITAN_INDEX < MAX_INDEX:
+                ADD_INDEX = (1 + splashDamage//currentTitan.getHealth())
+                if ADD_INDEX > MAX_INDEX-TITAN_INDEX:
+                    ADD_INDEX = MAX_INDEX-TITAN_INDEX
+                TITAN_INDEX += ADD_INDEX
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact)*ADD_INDEX)
+                if TITAN_INDEX < MAX_INDEX:
+                    currentTitan = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                    currentTitan.takeDamage(splashDamage-(splashDamage//currentTitan.getHealth())*currentTitan.getHealth())
+                    TITAN_HEALTH = currentTitan.health
+            elif TITAN_INDEX == MAX_INDEX and STAGE%10 == 0:
+                TITAN_INDEX = 11
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact))
+                currentTitan = Titan(STAGE, 3, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                TITAN_HEALTH = currentTitan.health
+            elif TITAN_INDEX == MAX_INDEX:
+                TITAN_INDEX = 11
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact))
+                currentTitan = Titan(STAGE, 2, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                TITAN_HEALTH = currentTitan.health
+            else:
+                TITAN_INDEX = 1
+                STAGE += 1
+                MONEY += int(currentTitan.getValue()*getEffectMult(merch_artifact))
+                currentTitan = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                TITAN_HEALTH = currentTitan.health
+        # Hero DPS
+        totalDPS = 0
+        for hero in heroes:
+            if hero.level > 0:
+                totalDPS += hero.getDPS()
+        totalDPS = int(totalDPS*getTotalArtifactDamageMult(artifacts)*getEffectMult(tv_artifact))
+        if time.perf_counter()-lastTime >= 1:
+            if r.randint(0, 100) <= (getEffectMult(maya_artifact)-1)*100:
+                totalDPS = int(totalDPS * getEffectMult(edgar_artifact))
+            currentTitan.takeDamage(totalDPS)
+            if currentTitan.health <= 0:
+                splashDamage = -int(currentTitan.health*getEffectMult(slippy_artifact))
+            TITAN_HEALTH = currentTitan.health
+            lastTime = time.perf_counter()
+        currentTitan.checkAlive(FPS_SETTING)
+        '''
+        END
+        '''
         # Events
         for event in p.event.get():
             # Quit Event
@@ -953,46 +1278,80 @@ def main():
                     gameState = 'artifacts'
                     main()
                 # Upgrade Buttons
-                if upgrade1Button.check(p.mouse.get_pos()):
-                    if SUBS >= currentArtifact.getUpgradeCost(currentArtifact.level) and currentArtifact.level + 1 <= currentArtifact.maxLevel:
-                        SUBS -= currentArtifact.getUpgradeCost(currentArtifact.level)
-                        artifactNames = []
-                        for artifact in artifacts:
-                            artifactNames.append(artifact.name)
-                        ARTIFACT_LEVELS[artifactNames.index(currentArtifact.name)] += 1
-                        currentArtifact.level += 1
-                if upgrade10Button.check(p.mouse.get_pos()):
-                    if SUBS >= currentArtifact.getTotalUpgradeCost(10) or SUBS >= currentArtifact.getTotalUpgradeCost(currentArtifact.maxLevel-currentArtifact.level):
-                        if currentArtifact.level + 10 <= currentArtifact.maxLevel:
+                if currentArtifact.maxLevel > 0:
+                    if upgrade1Button.check(p.mouse.get_pos()):
+                        if SUBS >= currentArtifact.getUpgradeCost(currentArtifact.level) and currentArtifact.level + 1 <= currentArtifact.maxLevel:
+                            click.play()
+                            SUBS -= currentArtifact.getUpgradeCost(currentArtifact.level)
+                            artifactNames = []
+                            for artifact in artifacts:
+                                artifactNames.append(artifact.name)
+                            ARTIFACT_LEVELS[artifactNames.index(currentArtifact.name)] += 1
+                            currentArtifact.level += 1
+                    if upgrade10Button.check(p.mouse.get_pos()):
+                        if SUBS >= currentArtifact.getTotalUpgradeCost(10) or SUBS >= currentArtifact.getTotalUpgradeCost(currentArtifact.maxLevel-currentArtifact.level):
+                            if currentArtifact.level + 10 <= currentArtifact.maxLevel:
+                                click.play()
+                                SUBS -= currentArtifact.getTotalUpgradeCost(10)
+                                artifactNames = []
+                                for artifact in artifacts:
+                                    artifactNames.append(artifact.name)
+                                ARTIFACT_LEVELS[artifactNames.index(currentArtifact.name)] += 10
+                                currentArtifact.level += 10
+                            else:
+                                click.play()
+                                SUBS -= currentArtifact.getTotalUpgradeCost(currentArtifact.maxLevel - currentArtifact.level)
+                                artifactNames = []
+                                for artifact in artifacts:
+                                    artifactNames.append(artifact.name)
+                                ARTIFACT_LEVELS[artifactNames.index(currentArtifact.name)] = currentArtifact.maxLevel
+                                currentArtifact.level = currentArtifact.maxLevel
+                    if upgrade100Button.check(p.mouse.get_pos()):
+                        if SUBS >= currentArtifact.getTotalUpgradeCost(100) or SUBS >= currentArtifact.getTotalUpgradeCost(currentArtifact.maxLevel-currentArtifact.level):
+                            if currentArtifact.level + 100 <= currentArtifact.maxLevel:
+                                click.play()
+                                SUBS -= currentArtifact.getTotalUpgradeCost(100)
+                                artifactNames = []
+                                for artifact in artifacts:
+                                    artifactNames.append(artifact.name)
+                                ARTIFACT_LEVELS[artifactNames.index(currentArtifact.name)] += 100
+                                currentArtifact.level += 100
+                            else:
+                                click.play()
+                                SUBS -= currentArtifact.getTotalUpgradeCost(currentArtifact.maxLevel - currentArtifact.level)
+                                artifactNames = []
+                                for artifact in artifacts:
+                                    artifactNames.append(artifact.name)
+                                ARTIFACT_LEVELS[artifactNames.index(currentArtifact.name)] = currentArtifact.maxLevel
+                                currentArtifact.level = currentArtifact.maxLevel
+                else:
+                    if upgrade1Button.check(p.mouse.get_pos()):
+                        if SUBS >= currentArtifact.getUpgradeCost(currentArtifact.level):
+                            click.play()
+                            SUBS -= currentArtifact.getUpgradeCost(currentArtifact.level)
+                            artifactNames = []
+                            for artifact in artifacts:
+                                artifactNames.append(artifact.name)
+                            ARTIFACT_LEVELS[artifactNames.index(currentArtifact.name)] += 1
+                            currentArtifact.level += 1
+                    if upgrade10Button.check(p.mouse.get_pos()):
+                        if SUBS >= currentArtifact.getTotalUpgradeCost(10):
+                            click.play()
                             SUBS -= currentArtifact.getTotalUpgradeCost(10)
                             artifactNames = []
                             for artifact in artifacts:
                                 artifactNames.append(artifact.name)
                             ARTIFACT_LEVELS[artifactNames.index(currentArtifact.name)] += 10
                             currentArtifact.level += 10
-                        else:
-                            SUBS -= currentArtifact.getTotalUpgradeCost(currentArtifact.maxLevel - currentArtifact.level)
-                            artifactNames = []
-                            for artifact in artifacts:
-                                artifactNames.append(artifact.name)
-                            ARTIFACT_LEVELS[artifactNames.index(currentArtifact.name)] = currentArtifact.maxLevel
-                            currentArtifact.level = currentArtifact.maxLevel
-                if upgrade100Button.check(p.mouse.get_pos()):
-                    if SUBS >= currentArtifact.getTotalUpgradeCost(100) or SUBS >= currentArtifact.getTotalUpgradeCost(currentArtifact.maxLevel-currentArtifact.level):
-                        if currentArtifact.level + 100 <= currentArtifact.maxLevel:
+                    if upgrade100Button.check(p.mouse.get_pos()):
+                        if SUBS >= currentArtifact.getTotalUpgradeCost(100):
+                            click.play()
                             SUBS -= currentArtifact.getTotalUpgradeCost(100)
                             artifactNames = []
                             for artifact in artifacts:
                                 artifactNames.append(artifact.name)
                             ARTIFACT_LEVELS[artifactNames.index(currentArtifact.name)] += 100
                             currentArtifact.level += 100
-                        else:
-                            SUBS -= currentArtifact.getTotalUpgradeCost(currentArtifact.maxLevel - currentArtifact.level)
-                            artifactNames = []
-                            for artifact in artifacts:
-                                artifactNames.append(artifact.name)
-                            ARTIFACT_LEVELS[artifactNames.index(currentArtifact.name)] = currentArtifact.maxLevel
-                            currentArtifact.level = currentArtifact.maxLevel
             if event.type == p.KEYUP:
                 if event.key == p.K_ESCAPE:
                     click.play()
@@ -1003,7 +1362,7 @@ def main():
         # Artifact Stats
         downArrowImage = resImage(getImage('Images/down_arrow.png'))
         levels = currentArtifact.level + howManyLevels
-        if currentArtifact.level+howManyLevels >= currentArtifact.maxLevel:
+        if currentArtifact.level+howManyLevels >= currentArtifact.maxLevel and currentArtifact.maxLevel > 0:
             levels = currentArtifact.maxLevel
         artifactCurrentDamageText = getText('+' + prettyNum(currentArtifact.getDamageMult(currentArtifact.level)) + '% Damage', res(40), (0,0,0))
         screen.blit(artifactCurrentDamageText, (res(300)-artifactCurrentDamageText.get_width()//2, res(250)))

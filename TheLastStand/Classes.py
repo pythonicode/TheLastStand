@@ -196,8 +196,8 @@ class Titan:
         self.alive = True
         self.toDraw = True
         self.alpha = 255
-        self.health = int((math.pow(self.tier, 2)*math.pow(2, math.pow(self.level,.35))*self.level+math.pow(self.level,2)+7)*self.level)
-        self.value = int(self.tier*math.pow(5, self.tier-1)*math.pow(2, math.pow(self.level, 0.3))*(self.level/2)+(self.level-2))
+        self.health = int((math.pow(self.tier, 2)*math.pow(1.1, self.level/10)*self.level+math.pow(self.level,2)+7)*self.level)
+        self.value = int(self.tier*math.pow(5, self.tier-1)*math.pow(1.5, 1 + self.level/100)*(self.level)+(self.level-2))
         
     def draw(self, screen):
         if self.toDraw:
@@ -224,7 +224,7 @@ class Titan:
                 return True
         
     def wobble(self, currentTime, mult):
-        if self.alive:
+        if self.toDraw:
             if time.perf_counter()-currentTime <= 0.025:
                 self.x = self.xInit - mult
                 return False
@@ -251,10 +251,10 @@ class Titan:
         return False
     
     def getHealth(self):
-        return int((math.pow(self.tier, 2)*math.pow(2, math.pow(self.level,.35))*self.level+math.pow(self.level,2)+7)*self.level)
+        return int((math.pow(self.tier, 2)*math.pow(1.1, self.level/10)*self.level+math.pow(self.level,2)+7)*self.level)
     
     def getValue(self):
-        return int(self.tier*math.pow(5, self.tier-1)*math.pow(2, math.pow(self.level, 0.3))*(self.level/2)+(self.level-1))
+        return int(self.tier*math.pow(5, self.tier-1)*math.pow(1.5, 1 + self.level/100)*(self.level)+(self.level-2))
 
 class Artifact:
     
@@ -268,16 +268,16 @@ class Artifact:
         self.lockedImage = lockedImage
         self.image = normalImage
         
-        self.maxLevel = sys.maxsize
+        self.maxLevel = -1
         self.damageMult = 50*self.level
         self.effectMult = 10*self.level
-        self.upgradeCost = int(math.pow(self.level,2)*math.pow(1.1, math.pow(self.level,.5)))
+        self.upgradeCost = int(math.pow(self.level,2)*math.pow(1.1, self.level/100))
         self.desc = ''
         
         self.isMaxed = (self.level >= self.maxLevel)
         
         if self.artifactType == 'subs':
-            self.upgradeCost = int(math.pow(self.level,2)*math.pow(1.5, self.level))
+            self.upgradeCost = int(math.pow(self.level,2)*math.pow(1.5, self.level/100))
             self.desc = 'Subscribers'
         if self.artifactType == 'click':
             self.effectMult = int(math.pow(self.effectMult, 1.2))
