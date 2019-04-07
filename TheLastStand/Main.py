@@ -16,7 +16,7 @@ import time
 # Set up the Window
 def setup():  
     global gameState, clock, screen, game
-    global FULLSCREEN, RESOLUTION_SETTING, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP, VOLUME, MONEY, TOKENS, STAGE, HERO_INDEX, HERO_LEVELS, TITAN_HEALTH, TITAN_INDEX
+    global FULLSCREEN, RESOLUTION_SETTING, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP, VOLUME, MONEY, SUBS, STAGE, HERO_INDEX, HERO_LEVELS, TITAN_HEALTH, TITAN_INDEX, ARTIFACT_LEVELS
     p.init()
     # RETRIEVING DATA FROM SAVE FILE
     game = GameData('Saves/Save.txt')
@@ -29,14 +29,22 @@ def setup():
     HELP = toBoolean(data[3])
     VOLUME = data[4]
     MONEY = data[5]
-    TOKENS = data[6]
+    SUBS = data[6]
     STAGE = data[7]
     HERO_INDEX = data[8]
     HERO_LEVELS = []
-    TITAN_HEALTH = int((math.pow(2, math.pow(STAGE,.35))*STAGE+math.pow(STAGE,2)+7)*STAGE)
-    TITAN_INDEX = 1
     for i in range(20):
         HERO_LEVELS.append(data[i+9])
+    TITAN_INDEX = data[29]
+    tier = 1
+    if TITAN_INDEX > 10:
+        tier += 1
+        if STAGE%10 == 0:
+            tier += 1
+    TITAN_HEALTH = int((math.pow(tier, 2)*math.pow(2, math.pow(STAGE,.35))*STAGE+math.pow(STAGE,2)+7)*STAGE)
+    ARTIFACT_LEVELS = []
+    for i in range(30):
+        ARTIFACT_LEVELS.append(data[i+30])
     clock = p.time.Clock()
     # Display mode (sets width and height for the window)
     if FULLSCREEN:
@@ -56,7 +64,7 @@ def setup():
 # Main function that runs the game
 def main():
     global gameState, clock, screen, game
-    global FULLSCREEN, RESOLUTION_SETTING, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP, VOLUME, PREV_STATE, MONEY, TOKENS, STAGE, HERO_INDEX, HERO_LEVELS, TITAN_HEALTH, TITAN_INDEX
+    global FULLSCREEN, RESOLUTION_SETTING, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP, VOLUME, PREV_STATE, MONEY, SUBS, STAGE, HERO_INDEX, HERO_LEVELS, TITAN_HEALTH, TITAN_INDEX
     # Sounds
     click = p.mixer.Sound('Sounds/click.wav')
     click.set_volume(VOLUME/100)
@@ -65,6 +73,7 @@ def main():
     helpColor = (255,128,128)
     attackTime = time.perf_counter()
     lastTime = 0.5
+    howManyLevels = 1
     # Main Menu Objects
     startButton = TextButton(res(1120), res(450), 'Play', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
     settingsButton = TextButton(res(1070+(res(40)-40)), res(550), 'Settings', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
@@ -106,20 +115,21 @@ def main():
     upgrade1Button = TextButton(res(275), res(700), 'Upgrade 1', 'PixelSplitter-Bold.ttf', res(50), (0,0,0), (255,0,0))
     upgrade10Button = TextButton(res(645), res(700), 'Upgrade 10', 'PixelSplitter-Bold.ttf', res(50), (0,0,0), (255,0,0))
     upgrade100Button = TextButton(res(1040), res(700), 'Upgrade 100', 'PixelSplitter-Bold.ttf', res(50), (0,0,0), (255,0,0))
-    # Artifacts: Lasagna, Brofist Trophy
-    brofist_artifact = Artifact('Brofist Trophy', 1, 'subs',  resImage(getImage('Images/brofist_artifact.png')), resImage(getImage('Images/brofist_artifact_hover.png')), resImage(getImage('Images/brofist_artifact_locked.png')))    
-    camera_artifact = Artifact('Camera', 1, 'click',  resImage(getImage('Images/camera_artifact.png')), resImage(getImage('Images/camera_artifact_hover.png')), resImage(getImage('Images/camera_artifact_locked.png')))
-    chair_artifact = Artifact('399 Chair', 1, 'numbots',  resImage(getImage('Images/chair_artifact.png')), resImage(getImage('Images/chair_artifact_hover.png')), resImage(getImage('Images/chair_artifact_locked.png')))
-    maya_artifact = Artifact('Maya', 1, 'herochc',  resImage(getImage('Images/maya_artifact.png')), resImage(getImage('Images/maya_artifact_hover.png')), resImage(getImage('Images/maya_artifact_locked.png')))
-    edgar_artifact = Artifact('Edgar', 1, 'herochd',  resImage(getImage('Images/edgar_artifact.png')), resImage(getImage('Images/edgar_artifact_hover.png')), resImage(getImage('Images/edgar_artifact_locked.png')))
-    headphones_artifact = Artifact('Headphones', 1, 'artifact',  resImage(getImage('Images/headphones_artifact.png')), resImage(getImage('Images/headphones_artifact_hover.png')), resImage(getImage('Images/headphones_artifact_locked.png')))
-    merch_artifact = Artifact('Merch', 1, 'money',  resImage(getImage('Images/merch_artifact.png')), resImage(getImage('Images/merch_artifact_hover.png')), resImage(getImage('Images/merch_artifact_locked.png')))
-    slippy_artifact = Artifact('Slippy', 1, 'splash',  resImage(getImage('Images/slippy_artifact.png')), resImage(getImage('Images/slippy_artifact_hover.png')), resImage(getImage('Images/slippy_artifact_locked.png')))
-    tv_artifact = Artifact('TV', 1, 'hero',  resImage(getImage('Images/tv_artifact.png')), resImage(getImage('Images/tv_artifact_hover.png')), resImage(getImage('Images/tv_artifact_locked.png')))
+    # Artifacts
+    brofist_artifact = Artifact('Brofist Trophy', ARTIFACT_LEVELS[0], 'subs',  resImage(getImage('Images/brofist_artifact.png')), resImage(getImage('Images/brofist_artifact_hover.png')), resImage(getImage('Images/brofist_artifact_locked.png')))    
+    camera_artifact = Artifact('Camera', ARTIFACT_LEVELS[1], 'click',  resImage(getImage('Images/camera_artifact.png')), resImage(getImage('Images/camera_artifact_hover.png')), resImage(getImage('Images/camera_artifact_locked.png')))
+    chair_artifact = Artifact('399 Chair', ARTIFACT_LEVELS[2], 'numbots',  resImage(getImage('Images/chair_artifact.png')), resImage(getImage('Images/chair_artifact_hover.png')), resImage(getImage('Images/chair_artifact_locked.png')))
+    maya_artifact = Artifact('Maya', ARTIFACT_LEVELS[3], 'herochc',  resImage(getImage('Images/maya_artifact.png')), resImage(getImage('Images/maya_artifact_hover.png')), resImage(getImage('Images/maya_artifact_locked.png')))
+    edgar_artifact = Artifact('Edgar', ARTIFACT_LEVELS[4], 'herochd',  resImage(getImage('Images/edgar_artifact.png')), resImage(getImage('Images/edgar_artifact_hover.png')), resImage(getImage('Images/edgar_artifact_locked.png')))
+    headphones_artifact = Artifact('Headphones', ARTIFACT_LEVELS[5], 'artifact',  resImage(getImage('Images/headphones_artifact.png')), resImage(getImage('Images/headphones_artifact_hover.png')), resImage(getImage('Images/headphones_artifact_locked.png')))
+    merch_artifact = Artifact('Merch', ARTIFACT_LEVELS[6], 'money',  resImage(getImage('Images/merch_artifact.png')), resImage(getImage('Images/merch_artifact_hover.png')), resImage(getImage('Images/merch_artifact_locked.png')))
+    slippy_artifact = Artifact('Slippy', ARTIFACT_LEVELS[7], 'splash',  resImage(getImage('Images/slippy_artifact.png')), resImage(getImage('Images/slippy_artifact_hover.png')), resImage(getImage('Images/slippy_artifact_locked.png')))
+    tv_artifact = Artifact('TV', ARTIFACT_LEVELS[8], 'hero',  resImage(getImage('Images/tv_artifact.png')), resImage(getImage('Images/tv_artifact_hover.png')), resImage(getImage('Images/tv_artifact_locked.png')))
     artifacts = [brofist_artifact, camera_artifact, chair_artifact, maya_artifact, edgar_artifact, headphones_artifact, merch_artifact, slippy_artifact, tv_artifact]
     totalArtifactDamageMult = 1
     for artifact in artifacts:
         totalArtifactDamageMult += artifact.damageMult/100
+    unlockArtifactButton = TextButton(res(510), res(600), 'Unlock New Artifact', 'PixelSplitter-Bold.ttf', res(50), (0,0,0), (255,0,0))
     # Game Heroes Buttons
     heroMenuImageIndex = r.randint(0, len(heroes)-1)
     heroImage1 = heroes[heroMenuImageIndex].lockedImage
@@ -131,6 +141,17 @@ def main():
             if heroImage2.get_at((i,j)) == (0,0,0):
                 heroImage2.set_at((i,j), (255,0,0))
     heroesImageButton = ImageButton(res(120), res(80), heroImage1, heroImage2)
+    # Game Artifacts Button
+    artifactMenuImageIndex = r.randint(0, len(heroes)-1)
+    artifactImage1 = artifacts[artifactMenuImageIndex].lockedImage
+    artifactImage1 = p.transform.scale(artifactImage1, (int(artifactImage1.get_width()*1.5), int(artifactImage1.get_height()*1.5)))
+    artifactImage2 = artifacts[artifactMenuImageIndex].lockedImage
+    artifactImage2 = p.transform.scale(artifactImage2, (int(artifactImage2.get_width()*1.5), int(artifactImage2.get_height()*1.5)))
+    for i in range(artifactImage2.get_width()):
+        for j in range(artifactImage2.get_height()):
+            if artifactImage2.get_at((i,j)) == (0,0,0):
+                artifactImage2.set_at((i,j), (255,0,0))
+    artifactsImageButton = ImageButton(res(1330), res(75), artifactImage1, artifactImage2)
     # Pause Menu
     mainMenuButton = TextButton(res(680), res(300), 'Main Menu', 'PixelSplitter-Bold.ttf', res(40), (255,255,255), (255,0,0))
     settingsButton2 = TextButton(res(694), res(400), 'Settings', 'PixelSplitter-Bold.ttf', res(40), (255,255,255), (255,0,0))
@@ -343,6 +364,7 @@ def main():
         # Menu Buttons
         heroesImageButton.draw(screen)
         heroesButton.draw(screen)
+        artifactsImageButton.draw(screen)
         artifactsButton.draw(screen)
         skillsButton.draw(screen)
         prestigeButton.draw(screen)
@@ -359,6 +381,13 @@ def main():
         moneySurface.blit(moneyImage, (0,(moneyText.get_height()-moneyImage.get_height())//2))
         moneySurface.blit(moneyText, (moneyImage.get_width()+20, 0))
         screen.blit(moneySurface, (res(1400) - moneySurface.get_width()//2+res(25), res(800)))
+        # Subs
+        subImage = resImage(getImage('Images/subscribers.png', 50, 50))
+        subText = getText(prettyNum(SUBS), res(50), (0,0,0))
+        subSurface = p.Surface((subImage.get_width()+subText.get_width()+20, subText.get_height()+10), p.SRCALPHA)
+        subSurface.blit(subImage, (0,(subText.get_height()-subImage.get_height())//2))
+        subSurface.blit(subText, (subImage.get_width()+20, 0))
+        screen.blit(subSurface, (res(170)-subSurface.get_width()//2, res(800)))
         # Titans
         currentTitan.draw(screen)
         currentTitan.update(1000)
@@ -428,10 +457,12 @@ def main():
                 else:
                     heroesButton.toggleOff()
                     heroesImageButton.toggleOff()
-                if artifactsButton.check(p.mouse.get_pos()):
+                if artifactsButton.check(p.mouse.get_pos()) or artifactsImageButton.check(p.mouse.get_pos()):
                     artifactsButton.toggleOn()
+                    artifactsImageButton.toggleOn()
                 else:
                     artifactsButton.toggleOff()
+                    artifactsImageButton.toggleOff()
                 if skillsButton.check(p.mouse.get_pos()):
                     skillsButton.toggleOn()
                 else:
@@ -445,7 +476,7 @@ def main():
                     click.play()
                     gameState = 'heroes'
                     main()
-                if artifactsButton.check(p.mouse.get_pos()):
+                if artifactsButton.check(p.mouse.get_pos()) or artifactsImageButton.check(p.mouse.get_pos()):
                     click.play()
                     gameState = 'artifacts'
                     main()
@@ -546,7 +577,7 @@ def main():
         moneySurface = p.Surface((moneyImage.get_width()+moneyText.get_width()+20, moneyText.get_height()+10), p.SRCALPHA)
         moneySurface.blit(moneyImage, (0,(moneyText.get_height()-moneyImage.get_height())//2))
         moneySurface.blit(moneyText, (moneyImage.get_width()+20, 0))
-        screen.blit(moneySurface, (res(1600) - moneySurface.get_width() - res(50), res(50)))
+        screen.blit(moneySurface, (res(1600) - moneySurface.get_width() - res(50), res(25)))
         # Buttons
         backButton.draw(screen)
         rightButton.draw(screen)
@@ -684,6 +715,26 @@ def main():
         for artifact in unlockedArtifacts:
             artifactSurface.blit(artifact.image, (res(150)*(unlockedArtifacts.index(artifact)), 0))
         screen.blit(artifactSurface, (res(800)-artifactSurface.get_width()//2, res(200)))
+        # UI
+        subImage = resImage(getImage('Images/subscribers.png'))
+        subText = getText(prettyNum(SUBS), res(70), (0,0,0))
+        subSurface = p.Surface((subImage.get_width()+subText.get_width()+10, subText.get_height()+10), p.SRCALPHA)
+        subSurface.blit(subImage, (0,(subText.get_height()-subImage.get_height())//2))
+        subSurface.blit(subText, (subImage.get_width()+10, 0))
+        screen.blit(subSurface, (res(1600) - subSurface.get_width() - res(50), res(25)))
+        if len(unlockedArtifacts) == 0:
+            drawText(screen, '?', res(250), res(700), res(200), (0,0,0))
+        # New Artifact Unlocks
+        if len(artifacts) > len(unlockedArtifacts):
+            unlockArtifactButton.draw(screen)
+            subImage = resImage(getImage('Images/subscribers.png', 50, 50))
+            subText = getText(prettyNum(int(math.pow(len(unlockedArtifacts), 3)*math.pow(2,len(unlockedArtifacts)-1))), res(55), (0,0,0))
+            subSurface = p.Surface((subImage.get_width()+subText.get_width()+10, subText.get_height()+10), p.SRCALPHA)
+            subSurface.blit(subImage, (0,(subText.get_height()-subImage.get_height())//2))
+            subSurface.blit(subText, (subImage.get_width()+10, 0))
+            screen.blit(subSurface, (res(800) - subSurface.get_width()//2, res(670)))
+        else:
+            drawText(screen, 'All Artifacts have been Unlocked', res(50), res(300), res(600), (0,0,0))
         # Buttons
         backButton.draw(screen)
         # Events
@@ -703,6 +754,14 @@ def main():
                 if mouseY >= res(200) and mouseY <= res(320) and arti != '':
                     arti.image = arti.hoverImage
                 # Other Buttons
+                if backButton.check(p.mouse.get_pos()):
+                    backButton.toggleOn()
+                else:
+                    backButton.toggleOff()
+                if unlockArtifactButton.check(p.mouse.get_pos()):
+                    unlockArtifactButton.toggleOn()
+                else:
+                    unlockArtifactButton.toggleOff()
             if event.type == p.MOUSEBUTTONUP:
                 # Artifact Buttons
                 mouseX = p.mouse.get_pos()[0]
@@ -716,6 +775,22 @@ def main():
                     ARTIFACT_FOCUS = arti
                     gameState = 'artifact_page'
                     main()
+                # Other buttons
+                if backButton.check(p.mouse.get_pos()):
+                    click.play()
+                    gameState = 'game'
+                    main()
+                if unlockArtifactButton.check(p.mouse.get_pos()) and len(artifacts) != len(unlockedArtifacts):
+                    click.play()
+                    lockedArtifacts = []
+                    for artifact in artifacts:
+                        if artifact.level == 0:
+                            lockedArtifacts.append(artifact)
+                    if SUBS >= int(math.pow(len(unlockedArtifacts), 3)*math.pow(2,len(unlockedArtifacts)-1)):
+                        SUBS -= int(math.pow(len(unlockedArtifacts), 3)*math.pow(2,len(unlockedArtifacts)-1))
+                        index = r.randint(0,len(lockedArtifacts)-1)
+                        ARTIFACT_LEVELS[index] += 1
+                        lockedArtifacts[index].level += 1
             if event.type == p.KEYUP:
                 if event.key == p.K_ESCAPE:
                     click.play()
@@ -729,11 +804,23 @@ def main():
     while gameState == 'skills':
         # Pre-Event Code
         screen.fill((255,255,255))
+        drawText(screen, 'Coming Soon!', res(100), res(440), res(200), (0,0,0))
+        backButton.draw(screen)
         # Events
         for event in p.event.get():
             # Quit Event
             if event.type == p.QUIT:
                 gameState = 'quit'
+            if event.type == p.MOUSEMOTION:
+                if backButton.check(p.mouse.get_pos()):
+                    backButton.toggleOn()
+                else:
+                    backButton.toggleOff()
+            if event.type == p.MOUSEBUTTONUP:
+                if backButton.check(p.mouse.get_pos()):
+                    click.play()
+                    gameState = 'game'
+                    main()
             if event.type == p.KEYUP:
                 if event.key == p.K_ESCAPE:
                     click.play()
@@ -747,11 +834,24 @@ def main():
     while gameState == 'prestige':
         # Pre-Event Code
         screen.fill((255,255,255))
+        backButton.draw(screen)
         # Events
         for event in p.event.get():
             # Quit Event
             if event.type == p.QUIT:
                 gameState = 'quit'
+            if event.type == p.MOUSEMOTION:
+                # Back Button
+                if backButton.check(p.mouse.get_pos()):
+                    backButton.toggleOn()
+                else:
+                    backButton.toggleOff()
+            if event.type == p.MOUSEBUTTONUP:
+                # Back Button
+                if backButton.check(p.mouse.get_pos()):
+                    click.play()
+                    gameState = 'game'
+                    main()
             if event.type == p.KEYUP:
                 if event.key == p.K_ESCAPE:
                     click.play()
@@ -764,16 +864,94 @@ def main():
         p.display.flip()
     while gameState == 'artifact_page':
         # Pre-Event Code
+        currentArtifact = ARTIFACT_FOCUS
         screen.fill((255,255,255))
-        newImage = p.transform.scale(ARTIFACT_FOCUS.image, (ARTIFACT_FOCUS.image.get_width()*4,ARTIFACT_FOCUS.image.get_height()*4))
-        screen.blit(newImage, (res(580), res(200)))
+        newImage = p.transform.scale(currentArtifact.image, (currentArtifact.image.get_width()*4,currentArtifact.image.get_height()*4))
+        screen.blit(newImage, (res(560), res(200)))
+        artifactText = getText(currentArtifact.name, res(50), (0,0,0))
+        screen.blit(artifactText, (res(800)-artifactText.get_width()//2, res(100)))
+        artifactLevelText = getText('Level ' + prettyNum(currentArtifact.level), res(30), (0,0,0))
+        screen.blit(artifactLevelText, (res(800)-artifactLevelText.get_width()//2, res(150)))
+        # UI 
+        subImage = resImage(getImage('Images/subscribers.png'))
+        subText = getText(prettyNum(SUBS), res(70), (0,0,0))
+        subSurface = p.Surface((subImage.get_width()+subText.get_width()+10, subText.get_height()+10), p.SRCALPHA)
+        subSurface.blit(subImage, (0,(subText.get_height()-subImage.get_height())//2))
+        subSurface.blit(subText, (subImage.get_width()+10, 0))
+        screen.blit(subSurface, (res(1600) - subSurface.get_width() - res(50), res(25)))
         # Buttons
         backButton.draw(screen)
+        # Upgrade Button 1
+        upgrade1Button.draw(screen)
+        subImage = resImage(getImage('Images/subscribers.png', 40, 40))
+        subText = getText(prettyNum(currentArtifact.getUpgradeCost(currentArtifact.level)), res(45), (0,0,0))
+        subSurface = p.Surface((subImage.get_width()+subText.get_width()+10, subText.get_height()+10), p.SRCALPHA)
+        subSurface.blit(subImage, (0,(subText.get_height()-subImage.get_height())//2))
+        subSurface.blit(subText, (subImage.get_width()+10, 0))
+        screen.blit(subSurface, (res(800) - subSurface.get_width()//2 - res(400), res(760)))
+        # Upgrade Button 2
+        upgrade10Button.draw(screen)
+        subImage = resImage(getImage('Images/subscribers.png', 40, 40))
+        subText = getText(prettyNum(currentArtifact.getTotalUpgradeCost(10)), res(45), (0,0,0))
+        subSurface = p.Surface((subImage.get_width()+subText.get_width()+10, subText.get_height()+10), p.SRCALPHA)
+        subSurface.blit(subImage, (0,(subText.get_height()-subImage.get_height())//2))
+        subSurface.blit(subText, (subImage.get_width()+10, 0))
+        screen.blit(subSurface, (res(800) - subSurface.get_width()//2, res(760)))
+        # Upgrade Button 3
+        upgrade100Button.draw(screen)
+        subImage = resImage(getImage('Images/subscribers.png', 40, 40))
+        subText = getText(prettyNum(currentArtifact.getTotalUpgradeCost(100)), res(45), (0,0,0))
+        subSurface = p.Surface((subImage.get_width()+subText.get_width()+10, subText.get_height()+10), p.SRCALPHA)
+        subSurface.blit(subImage, (0,(subText.get_height()-subImage.get_height())//2))
+        subSurface.blit(subText, (subImage.get_width()+10, 0))
+        screen.blit(subSurface, (res(800) - subSurface.get_width()//2 + res(400), res(760)))
         # Events
         for event in p.event.get():
             # Quit Event
             if event.type == p.QUIT:
                 gameState = 'quit'
+            if event.type == p.MOUSEMOTION:
+                # Back Button
+                if backButton.check(p.mouse.get_pos()):
+                    backButton.toggleOn()
+                else:
+                    backButton.toggleOff()
+                # Upgrade Buttons
+                howManyLevels = 1
+                if upgrade1Button.check(p.mouse.get_pos()):
+                    upgrade1Button.toggleOn()
+                    howManyLevels = 1
+                else:
+                    upgrade1Button.toggleOff()
+                if upgrade10Button.check(p.mouse.get_pos()):
+                    upgrade10Button.toggleOn()
+                    howManyLevels = 10
+                else:
+                    upgrade10Button.toggleOff()
+                if upgrade100Button.check(p.mouse.get_pos()):
+                    upgrade100Button.toggleOn()
+                    howManyLevels = 100
+                else:
+                    upgrade100Button.toggleOff()
+            if event.type == p.MOUSEBUTTONUP:
+                # Back Button
+                if backButton.check(p.mouse.get_pos()):
+                    click.play()
+                    gameState = 'artifacts'
+                    main()
+                # Upgrade Buttons
+                if upgrade1Button.check(p.mouse.get_pos()):
+                    if SUBS >= currentArtifact.getUpgradeCost(currentArtifact.level):
+                        SUBS -= currentArtifact.getUpgradeCost(currentArtifact.level)
+                        currentArtifact.level += 1
+                if upgrade10Button.check(p.mouse.get_pos()):
+                    if SUBS >= currentArtifact.getTotalUpgradeCost(10):
+                        SUBS -= currentArtifact.getTotalUpgradeCost(10)
+                        currentArtifact.level += 10
+                if upgrade100Button.check(p.mouse.get_pos()):
+                    if SUBS >= currentArtifact.getTotalUpgradeCost(100):
+                        SUBS -= currentArtifact.getTotalUpgradeCost(100)
+                        currentArtifact.level += 100
             if event.type == p.KEYUP:
                 if event.key == p.K_ESCAPE:
                     click.play()
@@ -781,6 +959,21 @@ def main():
                     main()
         # Post-Event Code
         PREV_STATE = 'artifact_page'
+        # Artifact Stats
+        downArrowImage = resImage(getImage('Images/down_arrow.png'))
+        levels = currentArtifact.level + howManyLevels
+        if currentArtifact.level+howManyLevels >= currentArtifact.maxLevel:
+            levels = currentArtifact.maxLevel
+        artifactCurrentDamageText = getText('+' + prettyNum(currentArtifact.getDamageMult(currentArtifact.level)) + '% Damage', res(40), (0,0,0))
+        screen.blit(artifactCurrentDamageText, (res(300)-artifactCurrentDamageText.get_width()//2, res(250)))
+        screen.blit(downArrowImage, (res(300)-downArrowImage.get_width()//2, res(325)))
+        artifactNextDamageText = getText('+' + prettyNum(currentArtifact.getDamageMult(levels)) + '% Damage', res(40), (0,0,0))
+        screen.blit(artifactNextDamageText, (res(300)-artifactNextDamageText.get_width()//2, res(400)))
+        artifactSpecialMultText = getText('+' + prettyNum(currentArtifact.getEffectMult(currentArtifact.level)) + '% ' + currentArtifact.desc, res(40), (0,0,0))
+        screen.blit(artifactSpecialMultText, (res(1300)-artifactSpecialMultText.get_width()//2, res(250)))
+        screen.blit(downArrowImage, (res(1300)-downArrowImage.get_width()//2, res(325)))
+        artifactNextSpecialMultText = getText('+' + prettyNum(currentArtifact.getEffectMult(levels)) + '% ' + currentArtifact.desc, res(40), (0,0,0))
+        screen.blit(artifactNextSpecialMultText, (res(1300)-artifactNextSpecialMultText.get_width()//2, res(400)))
         # Update the display
         clock.tick(FPS_SETTING)
         p.display.flip()
@@ -863,8 +1056,11 @@ def prettyNum(num):
     
 
 def getData():
-    data = [toNum(FULLSCREEN), int(RESOLUTION_SETTING*900), FPS_SETTING, toNum(HELP), VOLUME, MONEY, TOKENS, STAGE, HERO_INDEX]
+    data = [toNum(FULLSCREEN), int(RESOLUTION_SETTING*900), FPS_SETTING, toNum(HELP), VOLUME, MONEY, SUBS, STAGE, HERO_INDEX]
     for lv in HERO_LEVELS:
+        data.append(lv)
+    data.append(TITAN_INDEX)
+    for lv in ARTIFACT_LEVELS:
         data.append(lv)
     return data
 

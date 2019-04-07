@@ -258,11 +258,11 @@ class Titan:
 
 class Artifact:
     
-    def __init__(self, name, level, type, normalImage, hoverImage, lockedImage):
+    def __init__(self, name, level, artifactType, normalImage, hoverImage, lockedImage):
         
         self.name = name
         self.level = level
-        self.type = type
+        self.artifactType = artifactType
         self.normalImage = normalImage
         self.hoverImage = hoverImage
         self.lockedImage = lockedImage
@@ -270,40 +270,60 @@ class Artifact:
         
         self.maxLevel = sys.maxsize
         self.damageMult = 50*self.level
-        self.effectMult = 1 + 0.1*self.level
+        self.effectMult = 10*self.level
         self.upgradeCost = int(math.pow(self.level,2)*math.pow(1.2, self.level))
         self.desc = ''
         
         self.isMaxed = (self.level >= self.maxLevel)
         
-        if self.type == 'subs':
+        if self.artifactType == 'subs':
             self.upgradeCost = int(math.pow(self.level,2)*math.pow(1.5, self.level))
-            self.desc = 'Subs Per Prestige'
-        if self.type == 'click':
+            self.desc = 'Subscribers'
+        if self.artifactType == 'click':
             self.desc = 'Click Damage'
-        if self.type == 'numbots':
+        if self.artifactType == 'numbots':
             self.maxLevel = 5
             self.damageMult = 50*math.pow(self.level,2)
-            self.effectMult = 0.1*self.level
-            self.upgradeCost = int(math.pow(self.level,3)*math.pow(2, math.pow(self.level,2)))
+            self.effectMult = 100 - 10*self.level
+            cost = '399'
+            for i in range(self.level):
+                cost += '9'
+            self.upgradeCost = int(cost)
             self.desc = 'Bots Per Level'
-        if self.type == 'herochc':
+        if self.artifactType == 'herochc':
             self.effectMult = 1 - math.pow(1.1, -self.level)
             self.desc = 'Hero Crit Chance'
-        if self.type == 'herochd':
+        if self.artifactType == 'herochd':
             self.desc = 'Hero Crit Damage'
-        if self.type == 'artifact':
+        if self.artifactType == 'artifact':
             self.desc = 'Artifact Damage'
-        if self.type == 'money':
+        if self.artifactType == 'money':
             self.desc = 'Monetization'
-        if self.type == 'splash':
+        if self.artifactType == 'splash':
             self.maxLevel = 50
-            self.effectMult = 0.05*self.level
+            self.effectMult = 5*self.level
             self.desc = 'Splash Damage'
-        if self.type == 'hero':
+        if self.artifactType == 'hero':
             self.desc = 'Hero Damage'
-
-        
+            
+    def getDamageMult(self, level):
+        temp = Artifact(self.name, level, self.artifactType, self.normalImage, self.hoverImage, self.lockedImage)
+        return temp.damageMult
+    
+    def getEffectMult(self, level):
+        temp = Artifact(self.name, level, self.artifactType, self.normalImage, self.hoverImage, self.lockedImage)
+        return temp.effectMult
+    
+    def getUpgradeCost(self, level):
+        temp = Artifact(self.name, level, self.artifactType, self.normalImage, self.hoverImage, self.lockedImage)
+        return temp.upgradeCost
+    
+    def getTotalUpgradeCost(self, amount):
+        totalUpgradeCost = 0
+        for i in range(amount):
+            totalUpgradeCost += self.getUpgradeCost(self.level+i)
+        return totalUpgradeCost
+    
     def draw(self, screen, x, y):
         screen.blit(self.image, (x,y))
         
