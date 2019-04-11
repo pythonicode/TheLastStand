@@ -60,7 +60,7 @@ def setup():
     p.mixer.music.play(-1,0.0)
     # Initial gameState
     gameState = 'mainmenu'
-
+ 
 # Main function that runs the game
 def main():
     global gameState, clock, screen, game
@@ -68,8 +68,10 @@ def main():
     game.save(getData())
     # Sounds
     click = p.mixer.Sound('Sounds/click.wav')
+    hit = p.mixer.Sound('Sounds/hit.wav')
     click.set_volume(VOLUME/100)
-    sounds = [click]
+    hit.set_volume(VOLUME/100)
+    sounds = [click, hit]
     # Misc Objects
     helpColor = (255,128,128)
     attackTime = time.perf_counter()
@@ -192,6 +194,7 @@ def main():
         for event in p.event.get():
             # Quit Event
             if event.type == p.QUIT:
+                game.save(getData())
                 gameState = 'quit'
             if event.type == p.MOUSEMOTION:
                 setHovering(startButton)
@@ -208,6 +211,7 @@ def main():
                     main()
                 if quitButton.check(p.mouse.get_pos()):
                     click.play()
+                    game.save(getData())
                     gameState = 'quit'
                     main()
         # Post-Event Code
@@ -335,6 +339,7 @@ def main():
         for event in p.event.get():
             # Quit Event
             if event.type == p.QUIT:
+                game.save(getData())
                 gameState = 'quit'
             if event.type == p.MOUSEBUTTONUP:
                 # Click Event for Full Screen Buttons
@@ -515,6 +520,7 @@ def main():
             titanNumText = getText('Boss', res(40), (0,0,0))
         screen.blit(titanNumText, (res(1170)-titanNumText.get_width(), res(20)))
         if time.perf_counter()-lastTime >= 1:
+            hit.play()
             if r.randint(0, 100) <= (getEffectMult(maya_artifact)-1)*100:
                 totalDPS = int(totalDPS * getEffectMult(edgar_artifact))
             currentTitan.takeDamage(totalDPS)
@@ -529,6 +535,7 @@ def main():
         for event in p.event.get():
             # Quit Event
             if event.type == p.QUIT:
+                game.save(getData())
                 gameState = 'quit'
             if event.type == p.MOUSEMOTION:
                 if heroesButton.check(p.mouse.get_pos()) or heroesImageButton.check(p.mouse.get_pos()):
@@ -576,6 +583,7 @@ def main():
                     gameState = 'pausemenu'
                     main()
                 if event.key == p.K_SPACE:
+                    hit.play()
                     if currentTitan.alive:
                         currentTitan.takeDamage(int(STAGE*getTotalArtifactDamageMult(artifacts)*getEffectMult(camera_artifact)))
                         if currentTitan.health <= 0:
@@ -601,6 +609,7 @@ def main():
         for event in p.event.get():
             # Quit Event
             if event.type == p.QUIT:
+                game.save(getData())
                 gameState = 'quit'
             if event.type == p.MOUSEMOTION:
                 if mainMenuButton.check(p.mouse.get_pos()):
@@ -626,6 +635,7 @@ def main():
                     main()
                 if quitButton2.check(p.mouse.get_pos()):
                     click.play()
+                    game.save(getData())
                     gameState = 'quit'
                     main()
             if event.type == p.KEYUP:
@@ -753,6 +763,7 @@ def main():
         for event in p.event.get():
             # Quit Event
             if event.type == p.QUIT:
+                game.save(getData())
                 gameState = 'quit'
             if event.type == p.MOUSEMOTION:
                 if backButton.check(p.mouse.get_pos()):
@@ -928,6 +939,7 @@ def main():
         for event in p.event.get():
             # Quit Event
             if event.type == p.QUIT:
+                game.save(getData())
                 gameState = 'quit'
             if event.type == p.MOUSEMOTION:
                 # Artifact Buttons
@@ -1047,6 +1059,7 @@ def main():
         for event in p.event.get():
             # Quit Event
             if event.type == p.QUIT:
+                game.save(getData())
                 gameState = 'quit'
             if event.type == p.MOUSEMOTION:
                 if backButton.check(p.mouse.get_pos()):
@@ -1142,6 +1155,7 @@ def main():
         for event in p.event.get():
             # Quit Event
             if event.type == p.QUIT:
+                game.save(getData())
                 gameState = 'quit'
             if event.type == p.MOUSEMOTION:
                 # Back Button
@@ -1281,6 +1295,7 @@ def main():
         for event in p.event.get():
             # Quit Event
             if event.type == p.QUIT:
+                game.save(getData())
                 gameState = 'quit'
             if event.type == p.MOUSEMOTION:
                 # Back Button
@@ -1424,6 +1439,7 @@ def main():
         for event in p.event.get():
             # Quit Event
             if event.type == p.QUIT:
+                game.save(getData())
                 gameState = 'quit'
         transitionAlpha += 2*(15/FPS_SETTING)
         if transitionAlpha >= 200:

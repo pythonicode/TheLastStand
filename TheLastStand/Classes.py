@@ -74,16 +74,18 @@ class ImageButton:
         self.downImage = downImage
         self.image = upImage
         self.up = True
+        self.toDraw = False
         
     # Draw the Button
     def draw(self, screen):
+        self.toDraw = True
         screen.blit(self.image, (self.x, self.y))
         
     # Check if the button is pressed
     def check(self, pos):
         mouseX = pos[0]
         mouseY = pos[1]
-        if mouseX > self.x and mouseX < (self.x+self.image.get_width()) and mouseY > self.y and mouseY < (self.y+self.image.get_height()):
+        if mouseX > self.x and mouseX < (self.x+self.image.get_width()) and mouseY > self.y and mouseY < (self.y+self.image.get_height()) and self.toDraw == True:
             return True
         return False
     
