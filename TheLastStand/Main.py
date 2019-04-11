@@ -41,7 +41,7 @@ def setup():
         tier += 1
         if STAGE%10 == 0:
             tier += 1
-    TITAN_HEALTH = int((math.pow(tier, 2)*math.pow(1.1, STAGE/10)*STAGE+math.pow(STAGE,2)+7)*STAGE)
+    TITAN_HEALTH = int((math.pow(tier, 2)*math.pow(1.1, STAGE/10)*STAGE+math.pow(STAGE,2)+8)*STAGE)
     ARTIFACT_LEVELS = []
     for i in range(30):
         ARTIFACT_LEVELS.append(data[i+30])
@@ -65,6 +65,7 @@ def setup():
 def main():
     global gameState, clock, screen, game
     global FULLSCREEN, RESOLUTION_SETTING, FPS_SETTING, WINDOW_WIDTH, WINDOW_HEIGHT, HELP, VOLUME, PREV_STATE, MONEY, SUBS, STAGE, HERO_INDEX, HERO_LEVELS, TITAN_HEALTH, TITAN_INDEX
+    game.save(getData())
     # Sounds
     click = p.mixer.Sound('Sounds/click.wav')
     click.set_volume(VOLUME/100)
@@ -75,6 +76,7 @@ def main():
     lastTime = 0.5
     howManyLevels = 1
     splashDamage = 0
+    transitionAlpha = 0
     # Main Menu Objects
     startButton = TextButton(res(1120), res(450), 'Play', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
     settingsButton = TextButton(res(1070+(res(40)-40)), res(550), 'Settings', 'PixelSplitter-Bold.ttf', 40, (0,0,0), (255,0,0))
@@ -136,7 +138,7 @@ def main():
     prestigeButtonImage1 = p.transform.scale(prestigeButtonImage1, (int(prestigeButtonImage1.get_width()*4), int(prestigeButtonImage1.get_height()*4)))
     prestigeButtonImage2 = resImage(getImage('Images/prestige_icon_hover.png'))
     prestigeButtonImage2 = p.transform.scale(prestigeButtonImage2, (int(prestigeButtonImage2.get_width()*4), int(prestigeButtonImage2.get_height()*4)))
-    getSubsButton = ImageButton(res(300), res(100), prestigeButtonImage1, prestigeButtonImage2)
+    getSubsButton = ImageButton(res(600), res(200), prestigeButtonImage1, prestigeButtonImage2)
     # Game Heroes Buttons
     heroMenuImageIndex = r.randint(0, len(heroes)-1)
     heroImage1 = heroes[heroMenuImageIndex].lockedImage
@@ -1070,9 +1072,22 @@ def main():
         # Pre-Event Code
         screen.fill((255,255,255))
         backButton.draw(screen)
+        drawText(screen, 'Prestige', res(70), res(620), res(50), (0,0,0))
         if STAGE < 50:
-            drawText(screen, 'Come Back After you reach', res(50), res(400), res(200), (0,0,0))
-            drawText(screen, 'STAGE 50', res(100), res(520), res(300), (0,0,0))
+            drawText(screen, 'Come Back After you reach', res(50), res(400), res(300), (0,0,0))
+            drawText(screen, 'STAGE 50', res(100), res(520), res(400), (0,0,0))
+        else:
+            getSubsButton.draw(screen)
+            drawText(screen, 'Advanced Start', res(40), res(350), res(700), (0,0,0))
+            drawText(screen, 'Subscribers', res(40), res(950), res(700), (0,0,0))
+            advancedStartText = getText('Stage ' + str(int(STAGE//50+math.pow(STAGE-50, 0.5))), res(50), (0,0,0))
+            screen.blit(advancedStartText, (res(520) - advancedStartText.get_width()//2, res(750)))
+            subImage = resImage(getImage('Images/subscribers.png', 40, 40))
+            subText = getText(prettyNum(int(math.pow((STAGE-50)/10, 2)+math.pow(1.1, (STAGE-50)/10))), res(50), (0,0,0))
+            subSurface = p.Surface((subImage.get_width()+subText.get_width()+10, subText.get_height()+10), p.SRCALPHA)
+            subSurface.blit(subImage, (0,(subText.get_height()-subImage.get_height())//2))
+            subSurface.blit(subText, (subImage.get_width()+10, 0))
+            screen.blit(subSurface, (res(800) - subSurface.get_width()//2 + res(300), res(750)))
         '''
         THE BELOW IS FOR UPDATING TITANS WHILE OUTSIDE THE 'GAME' STATE
         '''
@@ -1134,11 +1149,30 @@ def main():
                     backButton.toggleOn()
                 else:
                     backButton.toggleOff()
+                # Prestige Button
+                if getSubsButton.check(p.mouse.get_pos()):
+                    getSubsButton.toggleOn()
+                else:
+                    getSubsButton.toggleOff()
             if event.type == p.MOUSEBUTTONUP:
                 # Back Button
                 if backButton.check(p.mouse.get_pos()):
                     click.play()
                     gameState = 'game'
+                    main()
+                # Prestige Button
+                if getSubsButton.check(p.mouse.get_pos()):
+                    click.play()
+                    SUBS += int(math.pow((STAGE-50)/10, 2)+math.pow(1.1, (STAGE-50)/10))
+                    STAGE = int(STAGE//50+math.pow(STAGE-50, 0.5))
+                    currentTitan = Titan(STAGE, 1, res(500), res(200), resImage(getImage('Images/tseriesbot1_a.png')), resImage(getImage('Images/tseriesbot1_b.png')))
+                    MONEY = int(currentTitan.getValue()*getEffectMult(merch_artifact))
+                    TITAN_HEALTH = currentTitan.getHealth()
+                    for i in range(len(HERO_LEVELS)):
+                        HERO_LEVELS[i] = 0
+                    for hero in heroes:
+                        hero.level = 0
+                    gameState = 'transition'
                     main()
             if event.type == p.KEYUP:
                 if event.key == p.K_ESCAPE:
@@ -1377,6 +1411,26 @@ def main():
         # Update the display
         clock.tick(FPS_SETTING)
         p.display.flip()
+    while gameState == 'transition':
+        transitionSurface = p.Surface((res(1600), res(900)))
+        transitionSurface.fill((0,0,0))
+        text = getText('Returning to stage ' + str(STAGE), res(50), (255,255,255)).convert_alpha()
+        print(text.get_alpha())
+        screen.blit(text, (res(800)-text.get_width()//2, res(400)))
+        transitionSurface = transitionSurface.convert()
+        transitionSurface.set_alpha(transitionAlpha)
+        screen.blit(transitionSurface, (0,0))
+        # Events
+        for event in p.event.get():
+            # Quit Event
+            if event.type == p.QUIT:
+                gameState = 'quit'
+        transitionAlpha += 2*(15/FPS_SETTING)
+        if transitionAlpha >= 200:
+            gameState = 'game'
+            main()
+        clock.tick(FPS_SETTING)
+        p.display.flip()
 
 '''
 FUNCTIONS
@@ -1396,7 +1450,7 @@ def drawText(screen, text, size, x, y, color):
 
 def getText(text, size, color):
     myfont = p.font.Font('Fonts/' + FONT_NAME, size)
-    textsurface = myfont.render(text, False, color)
+    textsurface = myfont.render(text, False, color, p.SRCALPHA)
     return textsurface
 
 def res(num):

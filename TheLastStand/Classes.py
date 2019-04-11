@@ -196,8 +196,8 @@ class Titan:
         self.alive = True
         self.toDraw = True
         self.alpha = 255
-        self.health = int((math.pow(self.tier, 2)*math.pow(1.1, self.level/10)*self.level+math.pow(self.level,2)+7)*self.level)
-        self.value = int(self.tier*math.pow(5, self.tier-1)*math.pow(1.5, 1 + self.level/100)*(self.level)+(self.level-2))
+        self.health = int((math.pow(self.tier, 2)*(math.pow(1.1, self.level/10)*self.level+math.pow(self.level,2)+8)*self.level))
+        self.value = int(self.tier*math.pow(5, self.tier-1)*math.pow(1.5, self.level/10)*(self.level)*(self.level))
         
     def draw(self, screen):
         if self.toDraw:
@@ -251,10 +251,10 @@ class Titan:
         return False
     
     def getHealth(self):
-        return int((math.pow(self.tier, 2)*math.pow(1.1, self.level/10)*self.level+math.pow(self.level,2)+7)*self.level)
+        return int((math.pow(self.tier, 2)*(math.pow(1.1, self.level/10)*self.level+math.pow(self.level,2)+8)*self.level))
     
     def getValue(self):
-        return int(self.tier*math.pow(5, self.tier-1)*math.pow(1.5, 1 + self.level/100)*(self.level)+(self.level-2))
+        return int(self.tier*math.pow(5, self.tier-1)*math.pow(1.5, self.level/10)*(self.level)*(self.level))
 
 class Artifact:
     
